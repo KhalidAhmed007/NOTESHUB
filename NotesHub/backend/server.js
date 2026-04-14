@@ -4,11 +4,11 @@ const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
 
-const authRoutes    = require('./routes/authRoutes');
-const noteRoutes    = require('./routes/noteRoutes');
+const authRoutes = require('./routes/authRoutes');
+const noteRoutes = require('./routes/noteRoutes');
 const historyRoutes = require('./routes/historyRoutes');
-const adminRoutes   = require('./routes/adminRoutes');
-const ratingRoutes  = require('./routes/ratingRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const ratingRoutes = require('./routes/ratingRoutes');
 
 const app = express();
 
@@ -48,10 +48,10 @@ app.get('/api/health', (req, res) => {
 });
 
 // ── Routes ───────────────────────────────────────────────────────────────────
-app.use('/api/auth',    authRoutes);
-app.use('/api/notes',   noteRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/notes', noteRoutes);
 app.use('/api/history', historyRoutes);
-app.use('/api/admin',   adminRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/ratings', ratingRoutes);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
@@ -67,7 +67,7 @@ app.use((err, req, res, next) => {
 });
 
 // ── Connect & Listen ─────────────────────────────────────────────────────────
-const PORT      = process.env.PORT      || 5000;
+const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/noteshub';
 
 // Safety check for production
@@ -87,7 +87,6 @@ mongoose.connect(MONGO_URI)
   .catch((err) => {
     console.error('❌ Failed to connect to MongoDB:', err.message);
     process.exit(1);
-  });
   });
 
 
