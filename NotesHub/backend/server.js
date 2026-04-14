@@ -60,7 +60,6 @@ app.use((req, res) => {
 });
 
 // ── Global Error Handler ─────────────────────────────────────────────────────
-// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error('[Global Error]', err.message);
   const status = err.status || 500;
@@ -68,8 +67,14 @@ app.use((err, req, res, next) => {
 });
 
 // ── Connect & Listen ─────────────────────────────────────────────────────────
-const PORT     = process.env.PORT     || 5000;
+const PORT      = process.env.PORT      || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/noteshub';
+
+// Safety check for production
+if (!process.env.MONGO_URI && process.env.NODE_ENV === 'production') {
+  console.error("❌ MONGO_URI is missing in production!");
+  process.exit(1);
+}
 
 mongoose.connect(MONGO_URI)
   .then(() => {
@@ -83,3 +88,6 @@ mongoose.connect(MONGO_URI)
     console.error('❌ Failed to connect to MongoDB:', err.message);
     process.exit(1);
   });
+  });
+
+
