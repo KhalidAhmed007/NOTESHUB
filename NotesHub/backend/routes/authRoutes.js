@@ -80,4 +80,20 @@ router.post('/login', [
   }
 });
 
+// GET /api/auth/verify
+// Rehydrates session on page refresh - returns fresh user data if token is valid
+router.get('/verify', require('../middleware/authMiddleware').authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    
+    res.status(200).json({
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error during verification.' });
+  }
+});
+
 module.exports = router;

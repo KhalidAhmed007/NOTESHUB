@@ -7,16 +7,33 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // ── Rehydrate session on every page load / refresh ───────────────────────
   useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('token');
+    const token    = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
 
     if (token && userData) {
-      setUser(JSON.parse(userData));
+      // Restore axios header so the verify call itself is authenticated
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      // Verify token is still valid against the backend
+      axios.get('/api/auth/verify')
+        .then((res) => {
+          // Backend returns fresh user data — use that (role may have changed)
+          setUser(res.data.user);
+          localStorage.setItem('user', JSON.stringify(res.data.user));
+        })
+        .catch(() => {
+          // Token expired / tampered — clear everything
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          delete axios.defaults.headers.common['Authorization'];
+          setUser(null);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = (token, userData) => {
