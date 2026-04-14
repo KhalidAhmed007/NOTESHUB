@@ -5,7 +5,9 @@ import App from './App.jsx'
 import axios from 'axios'
 
 // Dynamically target Local Server during dev, or actual Backend on Render/Railway during production.
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+axios.defaults.baseURL = import.meta.env.VITE_API_URL;
+  // || 'http://localhost:5000';
+console.log("API URL:", import.meta.env.VITE_API_URL);
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
