@@ -8,7 +8,8 @@ import axios from 'axios'
 //   Local dev  → frontend/.env
 //   Production → Vercel dashboard Environment Variables
 // Falls back to localhost:5000 for local development.
-axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL ;
+  // || 'http://localhost:5000';
 
 // Send token on every request automatically
 const token = localStorage.getItem('token');
