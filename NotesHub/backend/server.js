@@ -13,26 +13,29 @@ const ratingRoutes = require('./routes/ratingRoutes');
 const app = express();
 
 // ── Allowed Origins ──────────────────────────────────────────────────────────
-// CLIENT_URL is set in Render env vars to your Vercel frontend URL.
-// Falls back to localhost for local development.
+const rawClientUrl = process.env.CLIENT_URL;
+const sanitizedClientUrl = rawClientUrl ? rawClientUrl.replace(/\/$/, "") : null;
+
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  process.env.CLIENT_URL,        // e.g. https://noteshub.vercel.app
-].filter(Boolean);               // remove undefined if CLIENT_URL not set
+  sanitizedClientUrl,
+].filter(Boolean);
 
 // ── Global Middleware & Security ─────────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error(`CORS blocked for origin: ${origin}`));
+    
+    console.warn(`[CORS Blocked] Origin: ${origin} not in [${allowedOrigins.join(', ')}]`);
+    return callback(null, false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
+  optionsSuccessStatus: 200
 }));
 app.use(express.json());
 
