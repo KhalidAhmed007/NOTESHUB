@@ -1,7 +1,7 @@
 # 📚 NotesHub – Full Stack Notes Sharing Platform
 
 NotesHub is a full-stack MERN application that enables students to upload, explore, and rate academic notes. It is designed to simplify knowledge sharing while maintaining a clean and user-friendly interface.
-
+live URL : https://noteshub.khaleedahmed.codes
 ---
 
 ## 🚀 Features
