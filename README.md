@@ -34,6 +34,7 @@ Express.js
 MongoDB (Mongoose ODM)
 🔐 Authentication
 JSON Web Tokens (JWT)
+
 📂 Project Structure
 notes-hub/
 │
