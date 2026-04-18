@@ -5,6 +5,19 @@ const { BRANCHES } = require('../models/Note');
 const { authMiddleware, adminOnly } = require('../middleware/authMiddleware');
 const { upload, cloudinary } = require('../config/cloudinary');
 
+// Utility to generate thumbnail URL dynamically for PDFs
+const getThumbnailUrl = (fileUrl) => {
+  if (!fileUrl || !fileUrl.includes('res.cloudinary.com')) return null;
+  // Because PDFs are uploaded as 'raw' resource_type, Cloudinary does not allow
+  // direct image/upload transformations on them.
+  // We bypass this constraint by using Cloudinary's 'fetch' delivery type.
+  const urlParts = fileUrl.split('res.cloudinary.com/');
+  if (urlParts.length < 2) return null;
+  const cloudName = urlParts[1].split('/')[0];
+  
+  return `https://res.cloudinary.com/${cloudName}/image/fetch/pg_1,w_300,h_400,c_fill,f_jpg/${fileUrl}`;
+};
+
 // ── GET /api/notes — search, filter, sort ────────────────────────────────────
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -33,7 +46,12 @@ router.get('/', authMiddleware, async (req, res) => {
       .sort(sortOption)
       .lean();
 
-    res.status(200).json(notes);
+    const notesWithThumbs = notes.map(note => ({
+      ...note,
+      thumbnailUrl: getThumbnailUrl(note.fileUrl)
+    }));
+
+    res.status(200).json(notesWithThumbs);
   } catch (err) {
     console.error('[Notes GET]', err);
     res.status(500).json({ error: 'Server error fetching notes.' });
@@ -67,7 +85,7 @@ router.get('/trending', authMiddleware, async (req, res) => {
           as:           'uploadedBy',
         },
       },
-      { $unwind: { path: '$uploadedBy', preserveNullAndEmpty: true } },
+      { $unwind: { path: '$uploadedBy', preserveNullAndEmptyArrays: true } },
       {
         $project: {
           title: 1, subject: 1, branch: 1, semester: 1,
@@ -78,7 +96,12 @@ router.get('/trending', authMiddleware, async (req, res) => {
       },
     ]);
 
-    res.status(200).json(trending);
+    const trendingWithThumbs = trending.map(note => ({
+      ...note,
+      thumbnailUrl: getThumbnailUrl(note.fileUrl)
+    }));
+
+    res.status(200).json(trendingWithThumbs);
   } catch (err) {
     console.error('[Trending]', err);
     res.status(500).json({ error: 'Server error fetching trending notes.' });
@@ -88,8 +111,10 @@ router.get('/trending', authMiddleware, async (req, res) => {
 // ── GET /api/notes/public/:id — single note public (for share) ───────────────
 router.get('/public/:id', async (req, res) => {
   try {
-    const note = await Note.findById(req.params.id).populate('uploadedBy', 'name');
+    const note = await Note.findById(req.params.id).populate('uploadedBy', 'name').lean();
     if (!note) return res.status(404).json({ error: 'Note not found.' });
+    
+    note.thumbnailUrl = getThumbnailUrl(note.fileUrl);
     res.status(200).json(note);
   } catch (err) {
     console.error('[Note GET Public ID]', err);
@@ -100,8 +125,10 @@ router.get('/public/:id', async (req, res) => {
 // ── GET /api/notes/:id — single note ─────────────────────────────────────────
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
-    const note = await Note.findById(req.params.id).populate('uploadedBy', 'name email');
+    const note = await Note.findById(req.params.id).populate('uploadedBy', 'name email').lean();
     if (!note) return res.status(404).json({ error: 'Note not found.' });
+    
+    note.thumbnailUrl = getThumbnailUrl(note.fileUrl);
     res.status(200).json(note);
   } catch (err) {
     console.error('[Note GET ID]', err);
@@ -140,7 +167,11 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
     });
 
     await newNote.save();
-    res.status(201).json({ success: true, note: newNote });
+    
+    const noteToReturn = newNote.toObject();
+    noteToReturn.thumbnailUrl = getThumbnailUrl(noteToReturn.fileUrl);
+    
+    res.status(201).json({ success: true, note: noteToReturn });
   } catch (err) {
     console.error('[Note Upload]', err);
     res.status(500).json({ error: err.message || 'Server error uploading note.' });

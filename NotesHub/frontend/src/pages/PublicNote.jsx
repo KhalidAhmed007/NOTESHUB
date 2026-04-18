@@ -4,6 +4,7 @@ import axios from 'axios';
 import { FileText, Download, Eye, AlertCircle, ArrowLeft, Share2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import ShareModal from '../components/ShareModal';
+import Footer from '../components/Footer';
 
 const PublicNote = () => {
   const { id } = useParams();
@@ -155,6 +156,7 @@ const PublicNote = () => {
         onClose={() => setIsShareOpen(false)}
         note={note}
       />
+      <Footer />
     </div>
   );
 };

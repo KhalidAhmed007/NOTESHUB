@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import NoteCard from '../components/NoteCard';
+import Footer from '../components/Footer';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const BRANCHES  = ['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'AI/ML'];
@@ -131,10 +132,10 @@ const NotesPage = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/10">
+    <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
 
         {/* ── Page Header ─────────────────────────────────────────────────── */}
         <div className="mb-6">
@@ -252,7 +253,7 @@ const NotesPage = () => {
 
         {/* ── Notes Grid ──────────────────────────────────────────────────── */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Array(8).fill(0).map((_, i) => <CardSkeleton key={i} />)}
           </div>
         ) : notes.length === 0 ? (
@@ -275,7 +276,7 @@ const NotesPage = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {pagedNotes.map(note => (
                 <NoteCard
                   key={note._id}
@@ -327,6 +328,8 @@ const NotesPage = () => {
           </>
         )}
       </main>
+      
+      <Footer />
     </div>
   );
 };

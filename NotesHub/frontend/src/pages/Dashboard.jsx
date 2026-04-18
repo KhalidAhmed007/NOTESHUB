@@ -8,9 +8,10 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import NoteCard from '../components/NoteCard';
+import Footer from '../components/Footer';
 
 // ── Branch definitions — single source of truth ─────────────────────────────
-export const CATEGORIES = [
+const CATEGORIES = [
   { label: 'Computer Science',  short: 'CSE',   emoji: '💻', color: 'from-blue-500 to-indigo-600'    },
   { label: 'Information Tech',  short: 'IT',    emoji: '🌐', color: 'from-cyan-500 to-blue-600'      },
   { label: 'Electronics',       short: 'ECE',   emoji: '⚡', color: 'from-yellow-500 to-orange-500' },
@@ -137,10 +138,10 @@ const UserDashboard = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
+    <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
 
         {/* ───────────────── HERO ───────────────────────────────────────── */}
         <section className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-700 rounded-3xl p-8 md:p-12 text-white shadow-2xl">
@@ -265,7 +266,7 @@ const UserDashboard = () => {
         </section>
 
         {/* ──────────────── RECENTLY VIEWED ─────────────────────────────── */}
-        <section>
+        <section className="bg-transparent py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-indigo-500" />
@@ -277,7 +278,7 @@ const UserDashboard = () => {
           </div>
 
           {recentLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
               {Array(5).fill(0).map((_, i) => <CardSkeleton key={i} />)}
             </div>
           ) : recentNotes.length === 0 ? (
@@ -290,11 +291,11 @@ const UserDashboard = () => {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
               {recentNotes.map(note => (
                 <div key={note._id} className="relative group">
                   <NoteCard note={note} currentUser={user} onView={handleView} onDownload={handleDownload} onDelete={handleDelete} />
-                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  <div className="absolute top-3 left-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                     <span className="flex items-center gap-1 bg-indigo-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow">
                       <Eye className="h-3 w-3" /> View again
                     </span>
@@ -306,7 +307,7 @@ const UserDashboard = () => {
         </section>
 
         {/* ──────────────── TRENDING NOTES ──────────────────────────────── */}
-        <section>
+        <section className="bg-transparent py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-orange-500" />
@@ -321,7 +322,7 @@ const UserDashboard = () => {
           </div>
 
           {trendLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
               {Array(6).fill(0).map((_, i) => <CardSkeleton key={i} />)}
             </div>
           ) : trending.length === 0 ? (
@@ -334,7 +335,7 @@ const UserDashboard = () => {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
               {trending.map((note, idx) => (
                 <div key={note._id} className="relative">
                   <div className="absolute -top-2.5 -left-2.5 z-10 h-7 w-7 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 text-white text-xs font-extrabold flex items-center justify-center shadow-lg ring-2 ring-white">
@@ -373,6 +374,8 @@ const UserDashboard = () => {
         </section>
 
       </main>
+
+      <Footer />
     </div>
   );
 };

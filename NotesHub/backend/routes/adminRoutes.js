@@ -8,6 +8,15 @@ const User = require('../models/User');
 const TOTAL_MB = 512;
 const WARNING_THRESHOLD_MB = 470;
 
+// Utility to generate thumbnail URL dynamically for PDFs
+const getThumbnailUrl = (fileUrl) => {
+  if (!fileUrl || !fileUrl.includes('res.cloudinary.com')) return null;
+  const urlParts = fileUrl.split('res.cloudinary.com/');
+  if (urlParts.length < 2) return null;
+  const cloudName = urlParts[1].split('/')[0];
+  return `https://res.cloudinary.com/${cloudName}/image/fetch/pg_1,w_300,h_400,c_fill,f_jpg/${fileUrl}`;
+};
+
 // GET /api/admin/storage — DB storage stats (admin only)
 router.get('/storage', authMiddleware, adminOnly, async (req, res) => {
   try {
@@ -42,8 +51,14 @@ router.get('/stats', authMiddleware, adminOnly, async (req, res) => {
 // GET /api/admin/notes — all notes (admin only)
 router.get('/notes', authMiddleware, adminOnly, async (req, res) => {
   try {
-    const notes = await Note.find().populate('uploadedBy', 'name email').sort({ createdAt: -1 });
-    res.status(200).json(notes);
+    const notes = await Note.find().populate('uploadedBy', 'name email').sort({ createdAt: -1 }).lean();
+    
+    const notesWithThumbs = notes.map(note => ({
+      ...note,
+      thumbnailUrl: getThumbnailUrl(note.fileUrl)
+    }));
+
+    res.status(200).json(notesWithThumbs);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch notes.' });
   }

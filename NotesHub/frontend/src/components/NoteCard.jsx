@@ -1,8 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Download, Trash2, Share2 } from 'lucide-react';
+import { Eye, Download, Trash2, Share2, FileText } from 'lucide-react';
 import axios from 'axios';
 import RatingStars from './RatingStars';
 import ShareModal from './ShareModal';
+
+const getPlaceholderGradient = (subject) => {
+  const gradients = [
+    'from-emerald-400 to-teal-500',
+    'from-indigo-400 to-purple-500',
+    'from-blue-400 to-cyan-500',
+    'from-orange-400 to-red-500',
+    'from-pink-400 to-rose-500',
+    'from-violet-400 to-fuchsia-500'
+  ];
+  let sum = 0;
+  for(let i = 0; i < (subject?.length || 0); i++){
+     sum += subject.charCodeAt(i);
+  }
+  return gradients[sum % gradients.length];
+};
 
 /**
  * NoteCard — reusable note card component.
@@ -19,11 +35,11 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
   const isAdmin = currentUser?.role === 'admin';
   const canDelete = isOwner || isAdmin;
 
-  // Fetch this user's saved rating for this note
   const [userRating, setUserRating] = useState(null);
   const [ratingAvg,  setRatingAvg]  = useState(note.rating?.average || 0);
   const [ratingCnt,  setRatingCnt]  = useState(note.rating?.count   || 0);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,110 +51,147 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
           setRatingCnt(data.count    ?? 0);
         }
       })
-      .catch(() => {/* silent — shows defaults */});
+      .catch(() => {/* silent */});
     return () => { cancelled = true; };
   }, [note._id]);
 
-  return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 flex flex-col overflow-hidden group">
-      
-      {/* Card Header — colored accent bar */}
-      <div className="h-1.5 bg-gradient-to-r from-blue-500 to-indigo-500" />
+  const isTrending = (note.downloadsCount || 0) > 20 || (note.viewsCount || 0) > 50;
+  const isTopRated = ratingAvg >= 4.5 && ratingCnt > 0;
+  const isNew = note.createdAt && new Date() - new Date(note.createdAt) < 7 * 24 * 60 * 60 * 1000;
 
-      {/* Body */}
-      <div className="px-4 md:px-5 py-4 flex-1 flex flex-col gap-2 relative">
-        {/* Share Button placed absolute top right of the inner body */}
-        <button 
-          onClick={() => setIsShareOpen(true)}
-          title="Share Note"
-          className="absolute right-4 top-4 p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors z-10"
-        >
+  return (
+    <div className="group flex flex-col bg-[#ffffff] rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.08),0_4px_10px_rgba(0,0,0,0.04)] overflow-hidden hover:shadow-[0_20px_40px_rgba(0,0,0,0.12),0_8px_16px_rgba(0,0,0,0.06)] hover:-translate-y-[6px] transition-all duration-300 ease-out relative">
+      
+      {/* Visual Preview */}
+      <div className="relative h-40 w-full overflow-hidden bg-slate-100 shrink-0 border-b border-[#f1f5f9] rounded-t-2xl">
+        {note.thumbnailUrl && !imgError ? (
+          <img 
+            src={note.thumbnailUrl} 
+            alt="PDF preview" 
+            loading="lazy"
+            onError={() => setImgError(true)}
+            className="w-full h-full object-cover rounded-t-2xl group-hover:scale-105 transition-transform duration-500" 
+          />
+        ) : (
+          <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${getPlaceholderGradient(note.subject)} group-hover:scale-105 transition-transform duration-500`}>
+            <FileText className="w-12 h-12 text-white opacity-40 mix-blend-overlay" />
+          </div>
+        )}
+
+        {/* Badges */}
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
+          {isTrending && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm text-orange-600 text-[10px] font-bold uppercase tracking-wider rounded-md shadow-sm">
+              🔥 Trending
+            </span>
+          )}
+          {isTopRated && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm text-yellow-600 text-[10px] font-bold uppercase tracking-wider rounded-md shadow-sm">
+              ⭐ Top Rated
+            </span>
+          )}
+          {isNew && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm text-emerald-600 text-[10px] font-bold uppercase tracking-wider rounded-md shadow-sm">
+              🆕 New
+            </span>
+          )}
+        </div>
+
+        {/* Share Button Floating */}
+        <button onClick={() => setIsShareOpen(true)} className="absolute top-3 right-3 p-2 bg-white/40 hover:bg-white/80 backdrop-blur-md text-slate-700 rounded-full transition-all duration-200 shadow-sm opacity-0 group-hover:opacity-100 focus:opacity-100 z-10">
           <Share2 className="h-4 w-4" />
         </button>
+      </div>
 
-        {/* Branch + Semester badges */}
-        <div className="flex items-center justify-between pr-8">
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
+      <div className="flex flex-col flex-1 p-5 gap-3">
+        {/* Branch & Semester */}
+        <div className="flex items-center justify-between">
+          <span className="px-3 py-1 bg-violet-50 text-violet-700 text-xs font-bold tracking-wide uppercase rounded-full block w-fit">
             {note.branch}
           </span>
-          <span className="text-xs font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+          <span className="text-xs font-bold tracking-wide uppercase text-[#6b7280] bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
             Sem {note.semester}
           </span>
         </div>
 
-        {/* Title */}
-        <h3 className="text-base font-bold text-gray-900 line-clamp-2 leading-snug mt-1">
-          {note.title}
-        </h3>
-
-        {/* Subject */}
-        <p className="text-xs text-gray-500 font-medium truncate">{note.subject}</p>
-
-        {/* Rating */}
-        <div className="mt-1">
-          <RatingStars
-            noteId={note._id}
-            average={ratingAvg}
-            count={ratingCnt}
-            userRating={userRating}
-            onRated={(avg, cnt, ur) => {
-              setRatingAvg(avg);
-              setRatingCnt(cnt);
-              setUserRating(ur);
-            }}
-            size="sm"
-          />
+        {/* Title & Subject */}
+        <div>
+          <h3 className="text-[17px] font-[600] text-[#0f172a] leading-tight line-clamp-2">
+            {note.title}
+          </h3>
+          <p className="text-[13px] font-medium text-[#64748b] mt-1 line-clamp-1">
+            {note.subject}
+          </p>
         </div>
 
-        {/* Spacer */}
+        {/* Rating */}
+        <div className="flex items-center mt-1">
+          <div className="[&>div>span]:hidden flex items-center gap-2">
+            <RatingStars
+              noteId={note._id}
+              average={ratingAvg}
+              count={ratingCnt}
+              userRating={userRating}
+              onRated={(avg, cnt, ur) => {
+                setRatingAvg(avg);
+                setRatingCnt(cnt);
+                setUserRating(ur);
+              }}
+            />
+            <span className="text-sm font-medium whitespace-nowrap text-slate-600 ml-1">
+              {ratingCnt > 0 ? (
+                <span className="flex items-center gap-1">
+                 ⭐ <span className="font-bold text-slate-800">{ratingAvg.toFixed(1)}</span> <span className="text-slate-400">({ratingCnt})</span>
+                </span>
+              ) : (
+                <span className="italic text-slate-400 text-xs px-1">Be the first to rate</span>
+              )}
+            </span>
+          </div>
+        </div>
+
         <div className="flex-1" />
 
-        {/* Meta footer */}
-        <div className="flex items-center justify-between text-xs text-gray-400 pt-2 border-t border-gray-100 mt-2">
-          <span className="truncate max-w-[55%]">
-            <span className="text-gray-500 font-medium">{note.uploadedBy?.name?.split(' ')[0] || 'Unknown'}</span>
+        {/* Metadata Row */}
+        <div className="flex items-center justify-between text-sm text-slate-500 pt-3 border-t border-slate-100 mt-2">
+          <span className="truncate max-w-[40%] font-medium" title={note.uploadedBy?.name || 'Unknown'}>
+            {note.uploadedBy?.name?.split(' ')[0] || 'Unknown'}
           </span>
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-0.5">
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.641 0-8.58-3.007-9.964-7.178z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              {note.viewsCount ?? 0}
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5" title="Views">
+              <Eye className="w-4 h-4 text-slate-400" />
+              <span className="font-medium">{note.viewsCount ?? 0}</span>
             </span>
-            <span className="flex items-center gap-0.5">
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-              </svg>
-              {note.downloadsCount ?? 0}
+            <span className="flex items-center gap-1.5" title="Downloads">
+              <Download className="w-4 h-4 text-slate-400" />
+              <span className="font-medium">{note.downloadsCount ?? 0}</span>
             </span>
           </div>
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="px-4 md:px-5 pb-4 flex gap-2">
+      {/* Actions */}
+      <div className="px-5 pb-5 flex items-center gap-3">
         <button
           onClick={() => onView(note._id, note.fileUrl)}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-xl text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-[10px] text-white bg-gradient-to-br from-[#6d28d9] to-[#7c3aed] hover:from-[#7c3aed] hover:to-[#8b5cf6] shadow-[0_4px_10px_rgba(124,58,237,0.3)] hover:scale-[1.03] transition-all duration-200 focus:outline-none"
         >
-          <Eye className="h-3.5 w-3.5" /> View
+          <Eye className="w-4 h-4" /> View
         </button>
-
         <button
           onClick={() => onDownload(note._id, note.fileUrl)}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-xl text-white bg-blue-600 hover:bg-blue-700 transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-[10px] text-[#374151] bg-[#f1f5f9] hover:bg-[#e2e8f0] transition-all duration-200 focus:outline-none"
         >
-          <Download className="h-3.5 w-3.5" /> Save
+          <Download className="w-4 h-4" /> Save
         </button>
 
         {canDelete && (
           <button
-            onClick={() => onDelete(note._id)}
-            className="flex items-center justify-center px-2.5 py-2 rounded-xl text-red-500 bg-red-50 hover:bg-red-100 border border-red-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400"
-            title={isAdmin && !isOwner ? 'Delete (Admin)' : 'Delete'}
+             onClick={() => onDelete(note._id)}
+             className="flex items-center justify-center p-2.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 opacity-0 group-hover:opacity-100 focus:opacity-100"
+             title={isAdmin && !isOwner ? 'Delete (Admin)' : 'Delete'}
           >
-            <Trash2 className="h-3.5 w-3.5" />
+             <Trash2 className="w-4 h-4" />
           </button>
         )}
       </div>

@@ -64,6 +64,15 @@ router.get('/stats', authMiddleware, async (req, res) => {
   }
 });
 
+// Utility to generate thumbnail URL dynamically for PDFs
+const getThumbnailUrl = (fileUrl) => {
+  if (!fileUrl || !fileUrl.includes('res.cloudinary.com')) return null;
+  const urlParts = fileUrl.split('res.cloudinary.com/');
+  if (urlParts.length < 2) return null;
+  const cloudName = urlParts[1].split('/')[0];
+  return `https://res.cloudinary.com/${cloudName}/image/fetch/pg_1,w_300,h_400,c_fill,f_jpg/${fileUrl}`;
+};
+
 // ── GET /api/user/recent-notes — last 5 unique notes viewed ──────────────────
 router.get('/recent-notes', authMiddleware, async (req, res) => {
   try {
@@ -74,7 +83,7 @@ router.get('/recent-notes', authMiddleware, async (req, res) => {
       .limit(30)
       .populate({
         path:    'noteId',
-        select:  'title subject branch semester fileUrl rating downloadsCount viewsCount uploadedBy',
+        select:  'title subject branch semester fileUrl rating downloadsCount viewsCount uploadedBy createdAt',
         populate: { path: 'uploadedBy', select: 'name' },
       });
 
@@ -86,7 +95,9 @@ router.get('/recent-notes', authMiddleware, async (req, res) => {
       const id = entry.noteId._id.toString();
       if (!seen.has(id)) {
         seen.add(id);
-        uniqueNotes.push(entry.noteId);
+        const noteObj = entry.noteId.toObject ? entry.noteId.toObject() : { ...entry.noteId._doc };
+        noteObj.thumbnailUrl = getThumbnailUrl(noteObj.fileUrl);
+        uniqueNotes.push(noteObj);
       }
       if (uniqueNotes.length >= 5) break;
     }
