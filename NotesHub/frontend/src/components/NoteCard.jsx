@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Eye, Download, Trash2 } from 'lucide-react';
+import axios from 'axios';
 import RatingStars from './RatingStars';
+import { AuthContext } from '../context/AuthContext';
 
 /**
  * NoteCard — reusable note card component.
@@ -16,6 +18,25 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
   const isOwner = currentUser && note.uploadedBy?._id === currentUser.id;
   const isAdmin = currentUser?.role === 'admin';
   const canDelete = isOwner || isAdmin;
+
+  // Fetch this user's saved rating for this note
+  const [userRating, setUserRating] = useState(null);
+  const [ratingAvg,  setRatingAvg]  = useState(note.rating?.average || 0);
+  const [ratingCnt,  setRatingCnt]  = useState(note.rating?.count   || 0);
+
+  useEffect(() => {
+    let cancelled = false;
+    axios.get(`/api/ratings/${note._id}`)
+      .then(({ data }) => {
+        if (!cancelled) {
+          setUserRating(data.userRating ?? null);
+          setRatingAvg(data.average  ?? 0);
+          setRatingCnt(data.count    ?? 0);
+        }
+      })
+      .catch(() => {/* silent — shows defaults */});
+    return () => { cancelled = true; };
+  }, [note._id]);
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 flex flex-col overflow-hidden group">
@@ -47,9 +68,14 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
         <div className="mt-1">
           <RatingStars
             noteId={note._id}
-            average={note.rating?.average || 0}
-            count={note.rating?.count || 0}
-            userRating={null}
+            average={ratingAvg}
+            count={ratingCnt}
+            userRating={userRating}
+            onRated={(avg, cnt, ur) => {
+              setRatingAvg(avg);
+              setRatingCnt(cnt);
+              setUserRating(ur);
+            }}
             size="sm"
           />
         </div>
@@ -59,10 +85,24 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
 
         {/* Meta footer */}
         <div className="flex items-center justify-between text-xs text-gray-400 pt-2 border-t border-gray-100 mt-2">
-          <span className="truncate max-w-[60%]">
+          <span className="truncate max-w-[55%]">
             <span className="text-gray-500 font-medium">{note.uploadedBy?.name?.split(' ')[0] || 'Unknown'}</span>
           </span>
-          <span>{note.downloadsCount} DLs</span>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-0.5">
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.641 0-8.58-3.007-9.964-7.178z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {note.viewsCount ?? 0}
+            </span>
+            <span className="flex items-center gap-0.5">
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              {note.downloadsCount ?? 0}
+            </span>
+          </div>
         </div>
       </div>
 

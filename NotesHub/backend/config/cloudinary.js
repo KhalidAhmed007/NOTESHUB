@@ -23,11 +23,12 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ 
     storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB hard limit
     fileFilter: (req, file, cb) => {
         if (file.mimetype === 'application/pdf') {
             cb(null, true);
         } else {
-            cb(new Error("Server Exception: Only .pdf extensions are exclusively permitted by our architectural filters."), false);
+            cb(new Error('Only PDF files are allowed.'), false);
         }
     }
 });

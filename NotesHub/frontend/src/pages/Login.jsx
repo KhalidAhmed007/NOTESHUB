@@ -21,7 +21,7 @@ const Login = () => {
     try {
       const res = await axios.post('/api/auth/login', { email, password });
       login(res.data.token, res.data.user);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
     } finally {

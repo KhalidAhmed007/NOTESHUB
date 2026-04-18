@@ -2,7 +2,8 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import { UploadCloud, FileText, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { UploadCloud, FileText, CheckCircle2 } from 'lucide-react';
+import Navbar from '../components/Navbar';
 
 const UploadNote = () => {
     const { user } = useContext(AuthContext);
@@ -21,9 +22,17 @@ const UploadNote = () => {
 
     const handleFileChange = (e) => {
         const selected = e.target.files[0];
-        if (selected && selected.type !== "application/pdf") {
-            setError("Security Error: Only strict .pdf documents are allowed!");
+        if (!selected) return;
+        if (selected.type !== 'application/pdf') {
+            setError('Only PDF files are allowed.');
             setFile(null);
+            e.target.value = '';
+            return;
+        }
+        if (selected.size > 10 * 1024 * 1024) {
+            setError('File exceeds the 10 MB size limit. Please compress or trim the PDF.');
+            setFile(null);
+            e.target.value = '';
             return;
         }
         setError('');
@@ -56,7 +65,7 @@ const UploadNote = () => {
             setFile(null);
 
             setTimeout(() => {
-                navigate('/');
+                navigate('/dashboard');
             }, 2000);
 
         } catch(err) {
@@ -68,22 +77,8 @@ const UploadNote = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
-            <nav className="bg-white shadow">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between h-16 items-center">
-                    <div className="flex items-center">
-                    <FileText className="h-8 w-8 text-blue-600" />
-                    <span className="ml-2 text-2xl font-bold text-gray-900">NotesHub</span>
-                    </div>
-                    <div className="flex items-center">
-                    <Link to="/" className="text-gray-600 hover:text-blue-600 font-medium flex items-center transition">
-                        <ArrowLeft className="h-5 w-5 mr-1" /> Return to Feed
-                    </Link>
-                    </div>
-                </div>
-                </div>
-            </nav>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/10 flex flex-col">
+            <Navbar />
 
             <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
@@ -138,11 +133,12 @@ const UploadNote = () => {
                                         value={branch} onChange={(e) => setBranch(e.target.value)}
                                     >
                                         <option value="CSE">Computer Science (CSE)</option>
+                                        <option value="IT">Information Technology (IT)</option>
                                         <option value="ECE">Electronics (ECE)</option>
                                         <option value="EEE">Electrical (EEE)</option>
                                         <option value="MECH">Mechanical (MECH)</option>
                                         <option value="CIVIL">Civil (CIVIL)</option>
-                                        <option value="IT">Info Tech (IT)</option>
+                                        <option value="AI/ML">AI & Machine Learning (AI/ML)</option>
                                     </select>
                                 </div>
 

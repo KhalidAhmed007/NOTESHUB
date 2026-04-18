@@ -9,6 +9,7 @@ const noteRoutes = require('./routes/noteRoutes');
 const historyRoutes = require('./routes/historyRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const ratingRoutes = require('./routes/ratingRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use('/api/notes', noteRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ratings', ratingRoutes);
+app.use('/api/user', userRoutes);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 app.use((req, res) => {

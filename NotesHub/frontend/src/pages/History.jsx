@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import { Clock, Download, Eye, BookOpen, ArrowLeft } from 'lucide-react';
+import { Clock, Download, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import Navbar from '../components/Navbar';
 
 const HistoryPage = () => {
     const { user, logout } = useContext(AuthContext);
@@ -24,22 +25,8 @@ const HistoryPage = () => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
-          <nav className="bg-white shadow">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex justify-between h-16 items-center">
-                <div className="flex items-center">
-                  <BookOpen className="h-8 w-8 text-blue-600" />
-                  <span className="ml-2 text-2xl font-bold text-gray-900">NotesHub</span>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <Link to="/" className="text-blue-600 hover:text-blue-800 font-medium hidden sm:flex items-center transition">
-                    <ArrowLeft className="h-4 w-4 mr-1" /> Back to Dashboard
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </nav>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/10 flex flex-col">
+          <Navbar />
     
           <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="mb-6 flex items-center">
@@ -56,7 +43,7 @@ const HistoryPage = () => {
                 <Clock className="h-12 w-12 text-gray-300 mb-4" />
                 <h3 className="text-lg font-bold text-gray-800">No activity logged</h3>
                 <p className="mt-2 text-sm text-gray-500 font-medium">You haven't viewed or downloaded any PDFs recently.</p>
-                <Link to="/" className="mt-4 text-sm font-bold text-blue-600 hover:underline">Go Browse Notes</Link>
+                <Link to="/notes" className="mt-4 text-sm font-bold text-blue-600 hover:underline">Go Browse Notes</Link>
               </div>
             ) : (
                 <div className="bg-white shadow-sm overflow-hidden sm:rounded-xl border border-gray-200">
