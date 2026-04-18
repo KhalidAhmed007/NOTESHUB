@@ -24,16 +24,27 @@ Admin-controlled content moderation
 
 🚀 Features
 👤 User Features
+
 User authentication (Signup/Login with JWT)
+
 Upload notes (PDF and document formats)
+
 Browse and download notes
+
 Rate notes based on quality
+
 Search functionality (title, subject, keywords)
+
 Fully responsive design (mobile + desktop)
+
 🛠️ Admin Features
+
 Admin dashboard for platform management
+
 Remove inappropriate or low-quality content
+
 Efficient moderation and content control
+
 
 🧠 Tech Stack
 🎨 Frontend
