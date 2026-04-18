@@ -22,6 +22,8 @@ Secure authentication using JWT
 Admin-controlled content moderation
 
 
+
+
 🚀 Features
 👤 User Features
 
@@ -68,6 +70,7 @@ notes-hub/
 ├── .env.example         # Environment variables template
 └── README.md
 
+
 ⚙️ Installation & Setup
 1️⃣ Clone the Repository
 git clone https://github.com/your-username/noteshub-fullstack.git
@@ -76,11 +79,14 @@ cd noteshub-fullstack
 cd server
 npm install
 
+
 Create a .env file in the server/ directory:
 
 MONGO_URI=your_mongodb_uri
 JWT_SECRET=your_secret_key
 PORT=5000
+
+
 
 Run the backend server:
 
@@ -101,6 +107,7 @@ Public/private note visibility controls
 Comments and discussion system
 🤝 Contributing
 
+
 Contributions are welcome.
 
 # Fork the repository
@@ -115,6 +122,8 @@ git push origin feature/YourFeature
 📜 License
 
 This project is licensed under the MIT License.
+
+
 
 👨‍💻 Author
 
