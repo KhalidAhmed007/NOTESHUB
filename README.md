@@ -10,11 +10,17 @@ NotesHub is a full-stack MERN application built to streamline academic resource 
 The platform focuses on usability, performance, and structured content management, making knowledge sharing efficient and accessible.
 
 ✨ Key Highlights
+
 Seamless note upload and management system
+
 Public note sharing architecture (extensible)
+
 Responsive and performance-optimized UI
+
 Secure authentication using JWT
+
 Admin-controlled content moderation
+
 
 🚀 Features
 👤 User Features
