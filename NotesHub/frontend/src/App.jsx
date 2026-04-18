@@ -9,6 +9,7 @@ import HistoryPage from './pages/History';
 import UploadNote from './pages/UploadNote';
 import AdminDashboard from './pages/AdminDashboard';
 import Profile from './pages/Profile';
+import PublicNote from './pages/PublicNote';
 
 // ── Spinner shared between guards ──────────────────────────────────────────
 const Spinner = () => (
@@ -42,6 +43,7 @@ function App() {
           {/* Public routes */}
           <Route path="/login"  element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/notes/:id" element={<PublicNote />} />
 
           {/* Root → Dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

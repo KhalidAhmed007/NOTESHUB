@@ -117,6 +117,10 @@ router.put('/change-password',
       const isMatch = await bcrypt.compare(currentPassword, user.password);
       if (!isMatch) return res.status(400).json({ error: 'Current password is incorrect.' });
 
+      if (currentPassword === newPassword) {
+        return res.status(400).json({ error: 'New password cannot be the same as current password.' });
+      }
+
       // Hash and save new password
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(newPassword, salt);

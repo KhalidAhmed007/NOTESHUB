@@ -29,6 +29,9 @@ const Profile = () => {
     if (newPassword.length < 6) {
       return setPwError('New password must be at least 6 characters.');
     }
+    if (newPassword === currentPassword) {
+      return setPwError('New password cannot be the same as current password.');
+    }
     if (newPassword !== confirmPassword) {
       return setPwError('New passwords do not match.');
     }

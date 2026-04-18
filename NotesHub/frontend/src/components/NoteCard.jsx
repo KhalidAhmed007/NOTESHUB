@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Eye, Download, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Eye, Download, Trash2, Share2 } from 'lucide-react';
 import axios from 'axios';
 import RatingStars from './RatingStars';
-import { AuthContext } from '../context/AuthContext';
+import ShareModal from './ShareModal';
 
 /**
  * NoteCard — reusable note card component.
@@ -23,6 +23,7 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
   const [userRating, setUserRating] = useState(null);
   const [ratingAvg,  setRatingAvg]  = useState(note.rating?.average || 0);
   const [ratingCnt,  setRatingCnt]  = useState(note.rating?.count   || 0);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,9 +46,18 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
       <div className="h-1.5 bg-gradient-to-r from-blue-500 to-indigo-500" />
 
       {/* Body */}
-      <div className="px-4 md:px-5 py-4 flex-1 flex flex-col gap-2">
+      <div className="px-4 md:px-5 py-4 flex-1 flex flex-col gap-2 relative">
+        {/* Share Button placed absolute top right of the inner body */}
+        <button 
+          onClick={() => setIsShareOpen(true)}
+          title="Share Note"
+          className="absolute right-4 top-4 p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors z-10"
+        >
+          <Share2 className="h-4 w-4" />
+        </button>
+
         {/* Branch + Semester badges */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pr-8">
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
             {note.branch}
           </span>
@@ -132,6 +142,12 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
           </button>
         )}
       </div>
+
+      <ShareModal 
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        note={note}
+      />
     </div>
   );
 };

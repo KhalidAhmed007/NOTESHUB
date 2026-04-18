@@ -24,6 +24,8 @@ const HistoryPage = () => {
         fetchHistory();
     }, []);
 
+    const validHistory = history.filter(record => record.noteId);
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/10 flex flex-col">
           <Navbar />
@@ -38,7 +40,7 @@ const HistoryPage = () => {
               <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
               </div>
-            ) : history.length === 0 ? (
+            ) : validHistory.length === 0 ? (
               <div className="bg-white border border-gray-200 rounded-xl shadow-sm h-64 flex flex-col justify-center items-center">
                 <Clock className="h-12 w-12 text-gray-300 mb-4" />
                 <h3 className="text-lg font-bold text-gray-800">No activity logged</h3>
@@ -48,8 +50,7 @@ const HistoryPage = () => {
             ) : (
                 <div className="bg-white shadow-sm overflow-hidden sm:rounded-xl border border-gray-200">
                     <ul className="divide-y divide-gray-100">
-                        {history.map((record) => {
-                            if (!record.noteId) return null; // Safe degradation if a note gets deleted cleanly
+                        {validHistory.map((record) => {
                             
                             const isDownload = record.action === 'download';
                             const dateObj = new Date(record.timestamp);

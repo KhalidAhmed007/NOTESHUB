@@ -85,6 +85,18 @@ router.get('/trending', authMiddleware, async (req, res) => {
   }
 });
 
+// ── GET /api/notes/public/:id — single note public (for share) ───────────────
+router.get('/public/:id', async (req, res) => {
+  try {
+    const note = await Note.findById(req.params.id).populate('uploadedBy', 'name');
+    if (!note) return res.status(404).json({ error: 'Note not found.' });
+    res.status(200).json(note);
+  } catch (err) {
+    console.error('[Note GET Public ID]', err);
+    res.status(500).json({ error: 'Server error returning note metadata.' });
+  }
+});
+
 // ── GET /api/notes/:id — single note ─────────────────────────────────────────
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
