@@ -97,8 +97,9 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
           )}
         </div>
 
-        {/* Share Button Floating */}
-        <button onClick={() => setIsShareOpen(true)} className="absolute top-3 right-3 p-2 bg-white/40 hover:bg-white/80 backdrop-blur-md text-slate-700 rounded-full transition-all duration-200 shadow-sm opacity-0 group-hover:opacity-100 focus:opacity-100 z-10">
+        {/* Share Button — CHANGED: always visible (removed opacity-0/group-hover:opacity-100)
+              so it works on mobile/tablet where hover is unavailable. */}
+        <button onClick={() => setIsShareOpen(true)} className="absolute top-3 right-3 p-2 bg-white/60 hover:bg-white/90 backdrop-blur-md text-slate-700 rounded-full transition-all duration-200 shadow-sm focus:opacity-100 z-10">
           <Share2 className="h-4 w-4" />
         </button>
       </div>

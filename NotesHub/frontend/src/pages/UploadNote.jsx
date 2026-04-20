@@ -1,12 +1,10 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { AuthContext } from '../context/AuthContext';
 import { UploadCloud, FileText, CheckCircle2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
 const UploadNote = () => {
-    const { user } = useContext(AuthContext);
     const navigate = useNavigate();
 
     const [loading, setLoading] = useState(false);
@@ -29,6 +27,7 @@ const UploadNote = () => {
             e.target.value = '';
             return;
         }
+        // Client-side limit constraint: 10 MB limit
         if (selected.size > 10 * 1024 * 1024) {
             setError('File exceeds the 10 MB size limit. Please compress or trim the PDF.');
             setFile(null);
@@ -171,7 +170,10 @@ const UploadNote = () => {
                                         {file ? (
                                             <p className="text-sm text-green-600 font-extrabold tracking-wide mt-3 bg-green-100 py-1 px-3 rounded-full inline-block border border-green-200 shadow-sm">{file.name}</p>
                                         ) : (
-                                            <p className="text-sm text-gray-500 font-medium mt-2">Maximum limit: strictly 10MB PDF documents</p>
+                                            <>
+                                                {/* Reverted hint text from 50MB back to 10MB */}
+                                                <p className="text-sm text-gray-500 font-medium mt-2">Maximum limit: strictly 10MB PDF documents</p>
+                                            </>
                                         )}
                                     </div>
                                 </div>
