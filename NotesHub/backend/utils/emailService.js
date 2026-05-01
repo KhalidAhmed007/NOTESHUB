@@ -1,6 +1,12 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const getResendClient = () => {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("RESEND_API_KEY is not set. Emails will not be sent.");
+    return null;
+  }
+  return new Resend(process.env.RESEND_API_KEY);
+};
 
 /**
  * Send an OTP verification email to a new user.
@@ -8,6 +14,12 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  * and recipient is restricted to your verified email unless you have a domain.
  */
 const sendOTPEmail = async (toEmail, userName, otp) => {
+  const resend = getResendClient();
+  if (!resend) {
+    console.log(`[Mock Email] To: ${toEmail}, OTP: ${otp}`);
+    return { data: { id: "mock_id" }, error: null };
+  }
+
   const { data, error } = await resend.emails.send({
     from: `NotesHub <${process.env.FROM_EMAIL}>`,
     to: [toEmail],
