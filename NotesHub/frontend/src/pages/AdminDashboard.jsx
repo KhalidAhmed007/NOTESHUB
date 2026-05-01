@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import { AuthContext } from '../context/AuthContext';
 import Logo from '../components/Logo';
 import {
@@ -122,7 +123,7 @@ const AdminDashboard = () => {
       setNotes(prev => prev.filter(n => n._id !== noteId));
       fetchStorage();
     } catch (err) {
-      alert(err.response?.data?.error || 'Delete failed.');
+      toast.error(err.response?.data?.error || 'Delete failed.');
     }
   };
 
@@ -134,7 +135,7 @@ const AdminDashboard = () => {
         n._id === noteId ? { ...n, status: newStatus } : n
       ));
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to update status.');
+      toast.error(err.response?.data?.error || 'Failed to update status.');
     }
   };
 

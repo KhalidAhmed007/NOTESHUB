@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import { AuthContext } from '../context/AuthContext';
 import {
   BookOpen, Download, Clock, Upload, TrendingUp,
@@ -96,7 +97,7 @@ const UserDashboard = () => {
 
   // ── Note action handlers ──────────────────────────────────────────────────
   const handleView = (noteId, fileUrl) => {
-    if (!fileUrl) return alert('File URL missing.');
+    if (!fileUrl) return toast.error('File URL missing.');
     axios.post('/api/history/view', { noteId }).catch(console.error);
     window.open(fileUrl, '_blank');
     // Optimistic update local stats
@@ -104,7 +105,7 @@ const UserDashboard = () => {
   };
 
   const handleDownload = (noteId, fileUrl) => {
-    if (!fileUrl) return alert('File URL missing.');
+    if (!fileUrl) return toast.error('File URL missing.');
     axios.post('/api/history/download', { noteId }).catch(console.error);
     const link = document.createElement('a');
     link.href = fileUrl.replace('/upload/', '/upload/fl_attachment/');
@@ -125,7 +126,7 @@ const UserDashboard = () => {
       setTrending(prev => prev.filter(n => n._id !== noteId));
       setRecentNotes(prev => prev.filter(n => n._id !== noteId));
     } catch (err) {
-      alert(err.response?.data?.error || 'Delete failed.');
+      toast.error(err.response?.data?.error || 'Delete failed.');
     }
   };
 

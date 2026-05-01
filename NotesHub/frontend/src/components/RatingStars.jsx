@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 /**
  * RatingStars — interactive 1–5 star rating widget.
@@ -49,7 +50,7 @@ const RatingStars = ({
       if (onRated) onRated(data.average, data.count, data.userRating);
     } catch (err) {
       console.error('Rating failed:', err);
-      alert(err.response?.data?.error || 'Rating failed. Please try again.');
+      toast.error(err.response?.data?.error || 'Rating failed. Please try again.');
     } finally {
       setLoading(false);
     }

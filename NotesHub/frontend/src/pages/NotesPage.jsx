@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import { AuthContext } from '../context/AuthContext';
 import {
   Search, Filter, BookOpen, SlidersHorizontal,
@@ -92,13 +93,13 @@ const NotesPage = () => {
 
   // ── Note action handlers ──────────────────────────────────────────────────
   const handleView = (noteId, fileUrl) => {
-    if (!fileUrl) return alert('File URL missing.');
+    if (!fileUrl) return toast.error('File URL missing.');
     axios.post('/api/history/view', { noteId }).catch(console.error);
     window.open(fileUrl, '_blank');
   };
 
   const handleDownload = (noteId, fileUrl) => {
-    if (!fileUrl) return alert('File URL missing.');
+    if (!fileUrl) return toast.error('File URL missing.');
     axios.post('/api/history/download', { noteId }).catch(console.error);
     const link = document.createElement('a');
     link.href = fileUrl.replace('/upload/', '/upload/fl_attachment/');
@@ -118,7 +119,7 @@ const NotesPage = () => {
       await axios.delete(`/api/notes/${noteId}`);
       setNotes(prev => prev.filter(n => n._id !== noteId));
     } catch (err) {
-      alert(err.response?.data?.error || 'Delete failed.');
+      toast.error(err.response?.data?.error || 'Delete failed.');
     }
   };
 
