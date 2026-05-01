@@ -19,6 +19,12 @@ router.post('/:noteId', authMiddleware, async (req, res) => {
     const { noteId } = req.params;
     const userId = req.user.id;
 
+    const note = await Note.findById(noteId);
+    if (!note) return res.status(404).json({ error: 'Note not found.' });
+    if (note.uploadedBy.toString() === userId) {
+      return res.status(403).json({ error: 'You cannot rate your own note.' });
+    }
+
     // Upsert: update existing or create new rating
     await Rating.findOneAndUpdate(
       { userId, noteId },

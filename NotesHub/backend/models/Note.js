@@ -21,9 +21,12 @@ const noteSchema = new mongoose.Schema({
     average: { type: Number, default: 0 },
     count:   { type: Number, default: 0 },
   },
+  status: { type: String, enum: ['pending', 'approved', 'rejected', 'hidden'], default: 'pending' },
+  reportedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 }, { timestamps: true });
 
 // ── Indexes ──────────────────────────────────────────────────────────────────
+noteSchema.index({ status: 1 });                             // filter by status
 noteSchema.index({ title: 'text', subject: 'text' });        // full-text search
 noteSchema.index({ branch: 1, semester: 1 });                // filter combo
 noteSchema.index({ downloadsCount: -1 });                    // trending sort

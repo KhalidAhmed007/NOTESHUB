@@ -1,11 +1,42 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import {
   User, Mail, Shield, KeyRound, CheckCircle2,
-  AlertCircle, Eye, EyeOff, Lock,
+  AlertCircle, Eye, EyeOff, Lock, Upload, FileText, Clock
 } from 'lucide-react';
+
+const PasswordField = ({ id, label, value, onChange, show, onToggle, hint }) => (
+  <div className="space-y-1.5">
+    <label htmlFor={id} className="text-xs font-bold text-gray-500 uppercase tracking-wider">{label}</label>
+    <div className="relative">
+      <input
+        id={id}
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full pl-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
+      />
+      <button type="button" onClick={onToggle} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+    {hint && <p className="text-[10px] text-gray-400 font-medium">{hint}</p>}
+  </div>
+);
+
+const InfoRow = ({ icon: Icon, label, value }) => (
+  <div className="flex items-center gap-4 py-4">
+    <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+      <Icon className="h-5 w-5" />
+    </div>
+    <div>
+      <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">{label}</p>
+      <p className="text-sm font-semibold text-gray-700">{value}</p>
+    </div>
+  </div>
+);
 
 const Profile = () => {
   const { user } = useContext(AuthContext);
@@ -20,6 +51,17 @@ const Profile = () => {
   const [pwLoading,        setPwLoading]         = useState(false);
   const [pwSuccess,        setPwSuccess]         = useState('');
   const [pwError,          setPwError]           = useState('');
+
+  // ── My Uploads state ────────────────────────────────────────────────
+  const [myUploads,     setMyUploads]     = useState([]);
+  const [uploadsLoading, setUploadsLoading] = useState(true);
+
+  useEffect(() => {
+    axios.get('/api/user/my-uploads')
+      .then(({ data }) => setMyUploads(data))
+      .catch(() => {})
+      .finally(() => setUploadsLoading(false));
+  }, []);
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -177,51 +219,72 @@ const Profile = () => {
           </div>
         </div>
 
+        {/* ── My Uploads Card ──────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-8 py-5 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 bg-violet-100 rounded-xl">
+              <Upload className="h-5 w-5 text-violet-600" />
+            </div>
+            <div>
+              <h2 className="text-base font-extrabold text-gray-900">My Uploaded Notes</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Track the approval status of your contributions.</p>
+            </div>
+          </div>
+          <div className="px-8 py-6">
+            {uploadsLoading ? (
+              <div className="flex justify-center py-6">
+                <div className="h-6 w-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : myUploads.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <FileText className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">You haven't uploaded any notes yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {myUploads.map(note => {
+                  const s = note.status || 'approved';
+                  const statusStyle = {
+                    approved: 'bg-green-100 text-green-700',
+                    pending:  'bg-yellow-100 text-yellow-700',
+                    rejected: 'bg-red-100 text-red-700',
+                    hidden:   'bg-gray-200 text-gray-600',
+                  }[s] || 'bg-gray-200 text-gray-600';
+
+                  return (
+                    <div key={note._id} className="flex items-center justify-between gap-3 p-4 rounded-xl border border-gray-100 hover:bg-gray-50 transition">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-2 bg-slate-100 rounded-lg shrink-0">
+                          <FileText className="h-4 w-4 text-slate-500" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm text-gray-900 truncate">{note.title}</p>
+                          <p className="text-xs text-gray-400">{note.branch} · S{note.semester} · {note.subject}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                          <Clock className="h-3 w-3" />
+                          {new Date(note.createdAt).toLocaleDateString()}
+                        </span>
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusStyle}`}>
+                          {s === 'pending' ? '⏳ Pending' :
+                           s === 'approved' ? '✅ Approved' :
+                           s === 'rejected' ? '❌ Rejected' :
+                           '👁️ Hidden'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
       </main>
     </div>
   );
 };
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-const InfoRow = ({ icon: Icon, label, value }) => (
-  <div className="py-4 flex items-center gap-4">
-    <div className="h-9 w-9 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
-      <Icon className="h-4 w-4 text-slate-500" />
-    </div>
-    <div className="flex-1 min-w-0">
-      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</p>
-      <div className="text-sm font-semibold text-slate-800 mt-0.5 truncate">{value}</div>
-    </div>
-  </div>
-);
-
-const PasswordField = ({ id, label, value, onChange, show, onToggle, hint }) => (
-  <div>
-    <label htmlFor={id} className="block text-sm font-bold text-gray-700 mb-1.5">
-      {label}
-    </label>
-    <div className="relative">
-      <input
-        id={id}
-        type={show ? 'text' : 'password'}
-        required
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className="w-full border border-gray-200 rounded-xl py-2.5 px-4 pr-11 text-sm text-gray-900 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-        placeholder="••••••••"
-      />
-      <button
-        type="button"
-        onClick={onToggle}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
-        tabIndex={-1}
-      >
-        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-      </button>
-    </div>
-    {hint && <p className="mt-1 text-xs text-slate-400">{hint}</p>}
-  </div>
-);
 
 export default Profile;

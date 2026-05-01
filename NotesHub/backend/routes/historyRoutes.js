@@ -10,11 +10,15 @@ router.post('/view', authMiddleware, async (req, res) => {
     const { noteId } = req.body;
     if (!noteId) return res.status(400).json({ error: 'Missing noteId.' });
 
-    // Log history entry
-    await History.create({ userId: req.user.id, noteId, action: 'view' });
+    const existingHistory = await History.findOne({ userId: req.user.id, noteId, action: 'view' });
 
-    // Increment viewsCount on the note
-    await Note.findByIdAndUpdate(noteId, { $inc: { viewsCount: 1 } });
+    if (existingHistory) {
+      existingHistory.timestamp = Date.now();
+      await existingHistory.save();
+    } else {
+      await History.create({ userId: req.user.id, noteId, action: 'view' });
+      await Note.findByIdAndUpdate(noteId, { $inc: { viewsCount: 1 } });
+    }
 
     res.status(200).json({ success: true });
   } catch (err) {
@@ -29,11 +33,15 @@ router.post('/download', authMiddleware, async (req, res) => {
     const { noteId } = req.body;
     if (!noteId) return res.status(400).json({ error: 'Missing noteId.' });
 
-    // Log history entry
-    await History.create({ userId: req.user.id, noteId, action: 'download' });
+    const existingHistory = await History.findOne({ userId: req.user.id, noteId, action: 'download' });
 
-    // Increment global download counter
-    await Note.findByIdAndUpdate(noteId, { $inc: { downloadsCount: 1 } });
+    if (existingHistory) {
+      existingHistory.timestamp = Date.now();
+      await existingHistory.save();
+    } else {
+      await History.create({ userId: req.user.id, noteId, action: 'download' });
+      await Note.findByIdAndUpdate(noteId, { $inc: { downloadsCount: 1 } });
+    }
 
     res.status(200).json({ success: true });
   } catch (err) {

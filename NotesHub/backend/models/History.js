@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const historySchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   noteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Note', required: true, index: true },
-  action: { type: String, enum: ['view', 'download'], required: true },
+  action: { type: String, enum: ['view', 'download', 'report'], required: true },
   timestamp: { type: Date, default: Date.now }
 });
 

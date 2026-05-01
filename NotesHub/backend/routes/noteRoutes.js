@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Note = require('../models/Note');
+const History = require('../models/History');
+const Rating = require('../models/Rating');
 const { BRANCHES } = require('../models/Note');
 const { authMiddleware, adminOnly } = require('../middleware/authMiddleware');
 const { upload, cloudinary } = require('../config/cloudinary');
@@ -24,12 +26,28 @@ router.get('/', authMiddleware, async (req, res) => {
     const { search, branch, semester, subject, sortBy } = req.query;
     let query = {};
 
+    if (req.user.role !== 'admin') {
+      query.$or = [
+        { status: 'approved' },
+        { status: { $exists: false } }, // Treat legacy notes as approved
+        { uploadedBy: req.user.id }
+      ];
+    }
+
     // Full-text or regex search
     if (search) {
-      query.$or = [
-        { title:   { $regex: search, $options: 'i' } },
-        { subject: { $regex: search, $options: 'i' } },
-      ];
+      const searchCondition = {
+        $or: [
+          { title:   { $regex: search, $options: 'i' } },
+          { subject: { $regex: search, $options: 'i' } },
+        ]
+      };
+      if (query.$or) {
+        query = { $and: [ searchCondition, { $or: query.$or } ] };
+        delete query.$or;
+      } else {
+        query.$or = searchCondition.$or;
+      }
     }
     if (branch  && branch  !== 'All') query.branch   = branch;
     if (semester && semester !== 'All') query.semester = Number(semester);
@@ -65,6 +83,7 @@ router.get('/trending', authMiddleware, async (req, res) => {
     const limit = Math.min(Number(req.query.limit) || 6, 12);
 
     const trending = await Note.aggregate([
+      { $match: { $or: [{ status: 'approved' }, { status: { $exists: false } }] } },
       {
         $addFields: {
           score: {
@@ -113,6 +132,9 @@ router.get('/public/:id', async (req, res) => {
   try {
     const note = await Note.findById(req.params.id).populate('uploadedBy', 'name').lean();
     if (!note) return res.status(404).json({ error: 'Note not found.' });
+    if (note.status && note.status !== 'approved') {
+      return res.status(403).json({ error: 'This note is not publicly available.' });
+    }
     
     note.thumbnailUrl = getThumbnailUrl(note.fileUrl);
     res.status(200).json(note);
@@ -128,6 +150,12 @@ router.get('/:id', authMiddleware, async (req, res) => {
     const note = await Note.findById(req.params.id).populate('uploadedBy', 'name email').lean();
     if (!note) return res.status(404).json({ error: 'Note not found.' });
     
+    const isOwner = note.uploadedBy._id.toString() === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+    if (note.status && note.status !== 'approved' && !isOwner && !isAdmin) {
+      return res.status(403).json({ error: 'Note is pending approval or hidden.' });
+    }
+    
     note.thumbnailUrl = getThumbnailUrl(note.fileUrl);
     res.status(200).json(note);
   } catch (err) {
@@ -136,8 +164,22 @@ router.get('/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// Custom middleware to handle Multer errors gracefully
+const uploadMiddleware = (req, res, next) => {
+  const uploadSingle = upload.single('file');
+  uploadSingle(req, res, function (err) {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'File size exceeds the 10 MB limit.' });
+      }
+      return res.status(400).json({ error: err.message || 'File upload error.' });
+    }
+    next();
+  });
+};
+
 // ── POST /api/notes/upload — upload PDF ──────────────────────────────────────
-router.post('/upload', authMiddleware, upload.single('file'), async (req, res) => {
+router.post('/upload', authMiddleware, uploadMiddleware, async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No PDF file attached.' });
 
@@ -195,11 +237,48 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       await cloudinary.uploader.destroy(note.public_id, { resource_type: 'raw' });
     }
 
+    // Delete orphaned records to fix database bloat
+    await History.deleteMany({ noteId: req.params.id });
+    await Rating.deleteMany({ noteId: req.params.id });
+
     await Note.findByIdAndDelete(req.params.id);
     res.status(200).json({ success: true, message: 'Note deleted successfully.' });
   } catch (err) {
     console.error('[Note Delete]', err);
     res.status(500).json({ error: 'Server error deleting note.' });
+  }
+});
+
+// ── POST /api/notes/:id/report — community reporting ─────────────────────────
+router.post('/:id/report', authMiddleware, async (req, res) => {
+  try {
+    const note = await Note.findById(req.params.id);
+    if (!note) return res.status(404).json({ error: 'Note not found.' });
+
+    // Ensure the user hasn't already reported it
+    if (note.reportedBy.includes(req.user.id)) {
+      return res.status(400).json({ error: 'You have already reported this note.' });
+    }
+
+    note.reportedBy.push(req.user.id);
+
+    // Only hide if 3 or more UNIQUE users have reported it
+    if (note.reportedBy.length >= 3) {
+      note.status = 'hidden';
+    }
+
+    await note.save();
+
+    // Log the report in activity history
+    await History.findOneAndUpdate(
+      { userId: req.user.id, noteId: req.params.id, action: 'report' },
+      { userId: req.user.id, noteId: req.params.id, action: 'report', timestamp: new Date() },
+      { upsert: true }
+    );
+    res.status(200).json({ success: true, message: 'Note reported successfully.' });
+  } catch (err) {
+    console.error('[Note Report]', err);
+    res.status(500).json({ error: 'Server error reporting note.' });
   }
 });
 

@@ -109,4 +109,24 @@ router.get('/recent-notes', authMiddleware, async (req, res) => {
   }
 });
 
+// ── GET /api/user/my-uploads — user's own uploaded notes ─────────────────────
+router.get('/my-uploads', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const notes = await Note.find({ uploadedBy: userId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const notesWithThumbs = notes.map(n => ({
+      ...n,
+      thumbnailUrl: getThumbnailUrl(n.fileUrl),
+    }));
+
+    res.status(200).json(notesWithThumbs);
+  } catch (err) {
+    console.error('[MyUploads]', err);
+    res.status(500).json({ error: 'Server error fetching your uploads.' });
+  }
+});
+
 module.exports = router;

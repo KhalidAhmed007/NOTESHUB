@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
 import axios from 'axios';
 
@@ -29,7 +29,13 @@ const RatingStars = ({
   const [ratingCount, setCount]     = useState(count);
   const [loading, setLoading]       = useState(false);
 
+  // Sync when parent loads userRating asynchronously
+  useEffect(() => { setMyRating(userRating); }, [userRating]);
+  useEffect(() => { setAvgRating(average);   }, [average]);
+  useEffect(() => { setCount(count);         }, [count]);
+
   const starSize = size === 'sm' ? 'h-3.5 w-3.5' : 'h-5 w-5';
+  // When hovering show hovered; otherwise show the user's own rating so their stars stay filled
   const display  = hovered || myRating || 0;
 
   const handleRate = async (value) => {
@@ -43,6 +49,7 @@ const RatingStars = ({
       if (onRated) onRated(data.average, data.count, data.userRating);
     } catch (err) {
       console.error('Rating failed:', err);
+      alert(err.response?.data?.error || 'Rating failed. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -5,7 +5,8 @@ import { AuthContext } from '../context/AuthContext';
 import Logo from '../components/Logo';
 import {
   Database, Users, FileText, Download, AlertTriangle,
-  RefreshCw, Trash2, LogOut, LayoutDashboard, CheckCircle
+  RefreshCw, Trash2, LogOut, LayoutDashboard, CheckCircle,
+  CheckCircle2, XCircle, EyeOff, Flag
 } from 'lucide-react';
 
 const TOTAL_MB = 512;
@@ -15,13 +16,13 @@ const REFRESH_INTERVAL_MS = 3 * 60 * 1000; // auto-refresh every 3 minutes
 const StorageBar = ({ usedMB, totalMB, percentage }) => {
   const color =
     percentage > 90 ? 'bg-red-500' :
-    percentage > 70 ? 'bg-yellow-400' :
-    'bg-emerald-500';
+      percentage > 70 ? 'bg-yellow-400' :
+        'bg-emerald-500';
 
   const labelColor =
     percentage > 90 ? 'text-red-600' :
-    percentage > 70 ? 'text-yellow-600' :
-    'text-emerald-600';
+      percentage > 70 ? 'text-yellow-600' :
+        'text-emerald-600';
 
   return (
     <div className="space-y-2">
@@ -61,14 +62,14 @@ const AdminDashboard = () => {
   const { user, logout } = useContext(AuthContext);
 
   const [storage, setStorage] = useState(null);
-  const [stats, setStats]     = useState(null);
-  const [notes, setNotes]     = useState([]);
+  const [stats, setStats] = useState(null);
+  const [notes, setNotes] = useState([]);
   const [loadingStorage, setLoadingStorage] = useState(true);
-  const [loadingStats, setLoadingStats]     = useState(true);
-  const [loadingNotes, setLoadingNotes]     = useState(true);
-  const [storageError, setStorageError]     = useState('');
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [loadingNotes, setLoadingNotes] = useState(true);
+  const [storageError, setStorageError] = useState('');
   const [warningDismissed, setWarningDismissed] = useState(false);
-  const [lastRefresh, setLastRefresh]           = useState(new Date());
+  const [lastRefresh, setLastRefresh] = useState(new Date());
 
   // ── fetch storage stats ──────────────────────────────────────────────────
   const fetchStorage = useCallback(async () => {
@@ -119,9 +120,21 @@ const AdminDashboard = () => {
     try {
       await axios.delete(`/api/notes/${noteId}`);
       setNotes(prev => prev.filter(n => n._id !== noteId));
-      fetchStorage(); // refresh storage after deletion
+      fetchStorage();
     } catch (err) {
       alert(err.response?.data?.error || 'Delete failed.');
+    }
+  };
+
+  // ── Change Note Status (approve / reject / hide) ──────────────────────
+  const handleStatusChange = async (noteId, newStatus) => {
+    try {
+      await axios.put(`/api/admin/notes/${noteId}/status`, { status: newStatus });
+      setNotes(prev => prev.map(n =>
+        n._id === noteId ? { ...n, status: newStatus } : n
+      ));
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to update status.');
     }
   };
 
@@ -204,7 +217,7 @@ const AdminDashboard = () => {
         {/* ── Stat Cards ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <StatCard icon={FileText} label="Total Notes" value={loadingStats ? '...' : stats?.notes} color="bg-blue-500" />
-          <StatCard icon={Users}    label="Registered Users" value={loadingStats ? '...' : stats?.users} color="bg-indigo-500" />
+          <StatCard icon={Users} label="Registered Users" value={loadingStats ? '...' : stats?.users} color="bg-indigo-500" />
           <StatCard icon={Download} label="Total Downloads" value={loadingStats ? '...' : stats?.downloads} color="bg-emerald-500" />
         </div>
 
@@ -257,7 +270,13 @@ const AdminDashboard = () => {
         {/* ── Notes Management Table ── */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-900">All Notes</h2>
+            <h2 className="text-lg font-bold text-gray-900">All Notes
+              {notes.filter(n => n.status === 'pending').length > 0 && (
+                <span className="ml-2 text-xs font-semibold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">
+                  {notes.filter(n => n.status === 'pending').length} pending
+                </span>
+              )}
+            </h2>
             <span className="text-sm text-gray-500">{notes.length} total</span>
           </div>
 
@@ -272,41 +291,85 @@ const AdminDashboard = () => {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 text-xs text-gray-500 uppercase font-semibold">
                   <tr>
-                    <th className="px-6 py-3 text-left">Title</th>
-                    <th className="px-6 py-3 text-left">Subject</th>
-                    <th className="px-6 py-3 text-left">Branch</th>
-                    <th className="px-6 py-3 text-left">Sem</th>
-                    <th className="px-6 py-3 text-left">Uploaded By</th>
-                    <th className="px-6 py-3 text-left">DLs</th>
-                    <th className="px-6 py-3 text-left">Date</th>
-                    <th className="px-6 py-3 text-center">Action</th>
+                    <th className="px-4 py-3 text-left">Title / Branch</th>
+                    <th className="px-4 py-3 text-left">Status</th>
+                    <th className="px-4 py-3 text-left">Reports</th>
+                    <th className="px-4 py-3 text-left">Uploaded By</th>
+                    <th className="px-4 py-3 text-left">Date</th>
+                    <th className="px-4 py-3 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {notes.map(note => (
-                    <tr key={note._id} className="hover:bg-gray-50 transition">
-                      <td className="px-6 py-3 font-medium text-gray-900 max-w-[200px] truncate">{note.title}</td>
-                      <td className="px-6 py-3 text-gray-600">{note.subject}</td>
-                      <td className="px-6 py-3">
-                        <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{note.branch}</span>
-                      </td>
-                      <td className="px-6 py-3 text-gray-600">S{note.semester}</td>
-                      <td className="px-6 py-3 text-gray-600 max-w-[140px] truncate">{note.uploadedBy?.name || 'Unknown'}</td>
-                      <td className="px-6 py-3 text-gray-500">{note.downloadsCount}</td>
-                      <td className="px-6 py-3 text-gray-400 whitespace-nowrap">
-                        {new Date(note.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-3 text-center">
-                        <button
-                          onClick={() => handleDelete(note._id)}
-                          className="p-2 text-red-500 hover:bg-red-50 hover:text-red-700 rounded-lg transition"
-                          title="Delete note"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {notes.map(note => {
+                    const s = note.status || 'approved';
+                    return (
+                      <tr key={note._id} className={`hover:bg-gray-50 transition ${s === 'pending' ? 'bg-yellow-50/40' : ''}`}>
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-gray-900 max-w-[180px] truncate" title={note.title}>{note.title}</div>
+                          <div className="text-xs text-gray-400">{note.branch} · S{note.semester}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                            s === 'approved' ? 'bg-green-100 text-green-700' :
+                            s === 'pending'  ? 'bg-yellow-100 text-yellow-700' :
+                            s === 'rejected' ? 'bg-red-100 text-red-700' :
+                            'bg-gray-200 text-gray-600'
+                          }`}>{s}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`font-bold text-sm ${(note.reportedBy?.length || 0) >= 2 ? 'text-red-600' : 'text-gray-600'}`}>
+                            <Flag className="inline h-3 w-3 mr-1" />{note.reportedBy?.length || 0}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600 text-sm max-w-[120px] truncate">{note.uploadedBy?.name || 'Unknown'}</td>
+                        <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
+                          {new Date(note.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1.5">
+                            {/* Approve — shown when pending, rejected, or hidden */}
+                            {(s === 'pending' || s === 'rejected' || s === 'hidden') && (
+                              <button
+                                onClick={() => handleStatusChange(note._id, 'approved')}
+                                className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-green-700 bg-green-100 hover:bg-green-200 rounded-lg transition"
+                                title="Approve"
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5" /> Approve
+                              </button>
+                            )}
+                            {/* Reject — shown when pending or approved */}
+                            {(s === 'pending' || s === 'approved') && (
+                              <button
+                                onClick={() => handleStatusChange(note._id, 'rejected')}
+                                className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-orange-700 bg-orange-100 hover:bg-orange-200 rounded-lg transition"
+                                title="Reject"
+                              >
+                                <XCircle className="h-3.5 w-3.5" /> Reject
+                              </button>
+                            )}
+                            {/* Hide — shown when approved */}
+                            {s === 'approved' && (
+                              <button
+                                onClick={() => handleStatusChange(note._id, 'hidden')}
+                                className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+                                title="Hide from feed"
+                              >
+                                <EyeOff className="h-3.5 w-3.5" /> Hide
+                              </button>
+                            )}
+                            {/* Delete forever */}
+                            <button
+                              onClick={() => handleDelete(note._id)}
+                              className="p-1.5 text-red-400 hover:text-red-700 hover:bg-red-50 rounded-lg transition"
+                              title="Delete permanently"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

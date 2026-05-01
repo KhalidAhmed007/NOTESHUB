@@ -10,6 +10,7 @@ import UploadNote from './pages/UploadNote';
 import AdminDashboard from './pages/AdminDashboard';
 import Profile from './pages/Profile';
 import PublicNote from './pages/PublicNote';
+import VerifyEmail from './pages/VerifyEmail';
 
 // ── Spinner shared between guards ──────────────────────────────────────────
 const Spinner = () => (
@@ -19,10 +20,11 @@ const Spinner = () => (
 );
 
 // ── Protected Route (any logged-in user) ────────────────────────────────────
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, requireVerification = true }) => {
   const { user, loading } = React.useContext(AuthContext);
   if (loading) return <Spinner />;
   if (!user)   return <Navigate to="/login" />;
+  if (requireVerification && !user.isVerified) return <Navigate to="/verify-email" />;
   return children;
 };
 
@@ -31,6 +33,7 @@ const AdminRoute = ({ children }) => {
   const { user, loading } = React.useContext(AuthContext);
   if (loading)              return <Spinner />;
   if (!user)                return <Navigate to="/login" />;
+  if (!user.isVerified)     return <Navigate to="/verify-email" />;
   if (user.role !== 'admin') return <Navigate to="/dashboard" />;
   return children;
 };
@@ -47,6 +50,9 @@ function App() {
 
           {/* Root → Dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+          {/* Verification (Logged in but unverified) */}
+          <Route path="/verify-email" element={<ProtectedRoute requireVerification={false}><VerifyEmail /></ProtectedRoute>} />
 
           {/* User routes */}
           <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />

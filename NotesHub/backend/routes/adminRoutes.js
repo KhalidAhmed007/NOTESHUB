@@ -64,4 +64,19 @@ router.get('/notes', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
+// PUT /api/admin/notes/:id/status — update note status (admin only)
+router.put('/notes/:id/status', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['pending', 'approved', 'rejected', 'hidden'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status.' });
+    }
+    const note = await Note.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    if (!note) return res.status(404).json({ error: 'Note not found.' });
+    res.status(200).json({ success: true, note });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update note status.' });
+  }
+});
+
 module.exports = router;

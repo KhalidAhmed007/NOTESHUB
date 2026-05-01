@@ -4,6 +4,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
+const { sendOTPEmail } = require('../utils/emailService');
+
+// Helper to generate 6-digit OTP
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 // POST /api/auth/signup
 router.post('/signup', [
@@ -23,19 +27,32 @@ router.post('/signup', [
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = new User({ name, email, password: hashedPassword });
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+    const user = new User({ 
+      name, 
+      email, 
+      password: hashedPassword,
+      isVerified: false,
+      otp,
+      otpExpiry
+    });
     await user.save();
 
-    // Include id + role in JWT payload
+    // Send OTP asynchronously (don't block the response)
+    sendOTPEmail(user.email, user.name, otp).catch(err => console.error('OTP Send Error:', err));
+
+    // Include id + role + isVerified in JWT payload
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: user._id, role: user.role, isVerified: user.isVerified },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
     res.status(201).json({
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, isVerified: user.isVerified },
     });
   } catch (err) {
     console.error(err);
@@ -63,16 +80,16 @@ router.post('/login', [
 
     // Embed fresh role into token
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: user._id, role: user.role, isVerified: user.isVerified },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    console.log(`[Login] ${user.email} → role: ${user.role}`);
+    console.log(`[Login] ${user.email} → role: ${user.role}, verified: ${user.isVerified}`);
 
     res.status(200).json({
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, isVerified: user.isVerified },
     });
   } catch (err) {
     console.error(err);
@@ -88,7 +105,7 @@ router.get('/verify', require('../middleware/authMiddleware').authMiddleware, as
     if (!user) return res.status(404).json({ error: 'User not found.' });
 
     res.status(200).json({
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, isVerified: user.isVerified },
     });
   } catch (err) {
     console.error(err);
@@ -134,5 +151,71 @@ router.put('/change-password',
     }
   }
 );
+
+// POST /api/auth/verify-otp
+router.post('/verify-otp', require('../middleware/authMiddleware').authMiddleware, async (req, res) => {
+  try {
+    const { otp } = req.body;
+    if (!otp) return res.status(400).json({ error: 'OTP is required.' });
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+
+    if (user.isVerified) return res.status(400).json({ error: 'User is already verified.' });
+
+    if (user.otp !== otp) return res.status(400).json({ error: 'Invalid OTP.' });
+
+    if (new Date() > user.otpExpiry) {
+      return res.status(400).json({ error: 'OTP has expired. Please request a new one.' });
+    }
+
+    // Success! Update user.
+    user.isVerified = true;
+    user.otp = null;
+    user.otpExpiry = null;
+    await user.save();
+
+    // Re-sign token with new isVerified status
+    const token = jwt.sign(
+      { id: user._id, role: user.role, isVerified: true },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.status(200).json({
+      message: 'Email verified successfully.',
+      token,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, isVerified: true }
+    });
+
+  } catch (err) {
+    console.error('[Verify OTP]', err);
+    res.status(500).json({ error: 'Server error during verification.' });
+  }
+});
+
+// POST /api/auth/resend-otp
+router.post('/resend-otp', require('../middleware/authMiddleware').authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+
+    if (user.isVerified) return res.status(400).json({ error: 'User is already verified.' });
+
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+    user.otp = otp;
+    user.otpExpiry = otpExpiry;
+    await user.save();
+
+    await sendOTPEmail(user.email, user.name, otp);
+
+    res.status(200).json({ message: 'A new OTP has been sent to your email.' });
+  } catch (err) {
+    console.error('[Resend OTP]', err);
+    res.status(500).json({ error: 'Server error resending OTP.' });
+  }
+});
 
 module.exports = router;

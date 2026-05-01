@@ -93,7 +93,7 @@ const UploadNote = () => {
                         {success && (
                             <div className="mb-8 bg-green-50 border border-green-200 text-green-700 px-5 py-4 rounded-xl flex items-center shadow-sm">
                                 <CheckCircle2 className="h-6 w-6 mr-3" />
-                                <span className="font-bold text-sm">Document uploaded securely! Indexing and redirecting you to feed shortly...</span>
+                                <span className="font-bold text-sm">Document uploaded securely! It is currently pending admin approval and will appear on the feed shortly.</span>
                             </div>
                         )}
 

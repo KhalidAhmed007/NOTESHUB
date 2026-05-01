@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Download, Trash2, Share2, FileText } from 'lucide-react';
+import { Eye, Download, Trash2, Share2, FileText, Flag } from 'lucide-react';
 import axios from 'axios';
 import RatingStars from './RatingStars';
 import ShareModal from './ShareModal';
@@ -34,12 +34,28 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
   const isOwner = currentUser && note.uploadedBy?._id === currentUser.id;
   const isAdmin = currentUser?.role === 'admin';
   const canDelete = isOwner || isAdmin;
+  const canReport = !isOwner && !isAdmin; // only non-owners, non-admins can report
 
   const [userRating, setUserRating] = useState(null);
   const [ratingAvg,  setRatingAvg]  = useState(note.rating?.average || 0);
   const [ratingCnt,  setRatingCnt]  = useState(note.rating?.count   || 0);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [reported, setReported] = useState(note.reportedBy?.includes(currentUser?.id) || false);
+
+  const handleReport = async () => {
+    if (!currentUser) return alert('Please login to report notes.');
+    if (reported) return alert('You have already reported this note.');
+    if (window.confirm('Are you sure you want to report this note for inappropriate content?')) {
+      try {
+        await axios.post(`/api/notes/${note._id}/report`);
+        setReported(true);
+        alert('Note reported successfully. Thank you for keeping the community safe.');
+      } catch (err) {
+        alert(err.response?.data?.error || 'Failed to report note.');
+      }
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -93,6 +109,21 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
           {isNew && (
             <span className="inline-flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm text-emerald-600 text-[10px] font-bold uppercase tracking-wider rounded-md shadow-sm">
               🆕 New
+            </span>
+          )}
+          {note.status === 'pending' && isOwner && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm text-slate-600 text-[10px] font-bold uppercase tracking-wider rounded-md shadow-sm">
+              ⏳ Pending Approval
+            </span>
+          )}
+          {note.status === 'rejected' && isOwner && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm text-red-600 text-[10px] font-bold uppercase tracking-wider rounded-md shadow-sm">
+              ❌ Rejected
+            </span>
+          )}
+          {note.status === 'hidden' && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm text-slate-800 text-[10px] font-bold uppercase tracking-wider rounded-md shadow-sm">
+              👁️ Hidden
             </span>
           )}
         </div>
@@ -186,15 +217,26 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
           <Download className="w-4 h-4" /> Save
         </button>
 
-        {canDelete && (
+        {canDelete ? (
           <button
              onClick={() => onDelete(note._id)}
-             className="flex items-center justify-center p-2.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 opacity-0 group-hover:opacity-100 focus:opacity-100"
+             className="flex items-center justify-center p-2.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200 focus:outline-none"
              title={isAdmin && !isOwner ? 'Delete (Admin)' : 'Delete'}
           >
              <Trash2 className="w-4 h-4" />
           </button>
-        )}
+        ) : canReport ? (
+          <button
+             onClick={handleReport}
+             className={`flex items-center justify-center p-2.5 rounded-xl transition-all duration-200 focus:outline-none ${
+               reported ? 'text-red-500 bg-red-50 cursor-not-allowed' : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
+             }`}
+             title={reported ? 'Already reported' : 'Report as inappropriate'}
+             disabled={reported}
+          >
+             <Flag className="w-4 h-4" />
+          </button>
+        ) : null}
       </div>
 
       <ShareModal 

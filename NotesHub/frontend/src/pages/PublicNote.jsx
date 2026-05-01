@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { AuthContext } from '../context/AuthContext';
 import { FileText, Download, Eye, AlertCircle, ArrowLeft, Share2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import ShareModal from '../components/ShareModal';
@@ -8,6 +9,10 @@ import Footer from '../components/Footer';
 
 const PublicNote = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useContext(AuthContext);
+  
   const [note, setNote] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -131,21 +136,44 @@ const PublicNote = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <a 
-                href={note.fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button 
+                onClick={async (e) => {
+                  e.preventDefault();
+                  if (!user) {
+                    navigate('/login', { state: { from: location.pathname } });
+                    return;
+                  }
+                  try {
+                    await axios.post('/api/history/view', { noteId: note._id });
+                  } catch (err) { console.error(err); }
+                  window.open(note.fileUrl, '_blank');
+                }}
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold border-2 border-indigo-600 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-100 transition-colors"
               >
                 <Eye className="h-5 w-5" /> Preview PDF
-              </a>
-              <a 
-                href={note.fileUrl} 
-                download
+              </button>
+              <button 
+                onClick={async (e) => {
+                  e.preventDefault();
+                  if (!user) {
+                    navigate('/login', { state: { from: location.pathname } });
+                    return;
+                  }
+                  try {
+                    await axios.post('/api/history/download', { noteId: note._id });
+                  } catch (err) { console.error(err); }
+                  const link = document.createElement('a');
+                  link.href = note.fileUrl.replace('/upload/', '/upload/fl_attachment/');
+                  link.target = '_blank';
+                  link.rel = 'noopener noreferrer';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg hover:-translate-y-0.5 transition-all"
               >
                 <Download className="h-5 w-5" /> Download PDF
-              </a>
+              </button>
             </div>
           </div>
         </div>
