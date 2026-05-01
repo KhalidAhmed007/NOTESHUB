@@ -13,14 +13,14 @@ import NoteCard from '../components/NoteCard';
 import Footer from '../components/Footer';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const BRANCHES  = ['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'AI/ML'];
+const BRANCHES = ['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'AI/ML'];
 const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8];
 
 const SORT_OPTIONS = [
-  { value: 'latest',    label: 'Latest',        icon: Clock    },
+  { value: 'latest', label: 'Latest', icon: Clock },
   { value: 'downloads', label: 'Most Downloaded', icon: Download },
-  { value: 'views',     label: 'Most Viewed',   icon: Eye      },
-  { value: 'rating',    label: 'Highest Rated', icon: Star     },
+  { value: 'views', label: 'Most Viewed', icon: Eye },
+  { value: 'rating', label: 'Highest Rated', icon: Star },
 ];
 
 // ── Skeleton card ─────────────────────────────────────────────────────────────
@@ -44,24 +44,24 @@ const NotesPage = () => {
   const navigate = useNavigate();
 
   // State initialised from URL params (deep-link friendly)
-  const [search,   setSearch]   = useState(searchParams.get('search')  || '');
-  const [branch,   setBranch]   = useState(searchParams.get('branch')  || 'All');
-  const [semester, setSemester] = useState(searchParams.get('semester')|| 'All');
-  const [sortBy,   setSortBy]   = useState(searchParams.get('sortBy')  || 'latest');
-  const [notes,    setNotes]    = useState([]);
-  const [loading,  setLoading]  = useState(true);
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [branch, setBranch] = useState(searchParams.get('branch') || 'All');
+  const [semester, setSemester] = useState(searchParams.get('semester') || 'All');
+  const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'latest');
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // ── Pagination ────────────────────────────────────────────────────────────
   const PAGE_SIZE = 8;
   const [page, setPage] = useState(1);
-  const totalPages  = Math.ceil(notes.length / PAGE_SIZE);
-  const pagedNotes  = notes.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.ceil(notes.length / PAGE_SIZE);
+  const pagedNotes = notes.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // ── Sync URL params when filter state changes ─────────────────────────────
   useEffect(() => {
     const params = {};
-    if (search)           params.search   = search;
-    if (branch !== 'All') params.branch   = branch;
+    if (search) params.search = search;
+    if (branch !== 'All') params.branch = branch;
     if (semester !== 'All') params.semester = semester;
     if (sortBy !== 'latest') params.sortBy = sortBy;
     setSearchParams(params, { replace: true });
@@ -73,8 +73,8 @@ const NotesPage = () => {
     try {
       setLoading(true);
       const params = { sortBy };
-      if (search)             params.search   = search;
-      if (branch !== 'All')   params.branch   = branch;
+      if (search) params.search = search;
+      if (branch !== 'All') params.branch = branch;
       if (semester !== 'All') params.semester = semester;
       const res = await axios.get('/api/notes', { params });
       setNotes(Array.isArray(res.data) ? res.data : []);
@@ -153,7 +153,7 @@ const NotesPage = () => {
             {loading
               ? 'Searching…'
               : `${notes.length} note${notes.length !== 1 ? 's' : ''} found`
-                + (totalPages > 1 ? ` • Page ${page} of ${totalPages}` : '')}
+              + (totalPages > 1 ? ` • Page ${page} of ${totalPages}` : '')}
             {hasFilters && !loading && ' · Filters active'}
           </p>
         </div>
@@ -306,11 +306,10 @@ const NotesPage = () => {
                     <button
                       key={p}
                       onClick={() => setPage(p)}
-                      className={`h-9 w-9 rounded-xl text-sm font-bold transition-all ${
-                        p === page
+                      className={`h-9 w-9 rounded-xl text-sm font-bold transition-all ${p === page
                           ? 'bg-indigo-600 text-white shadow-sm'
                           : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
-                      }`}
+                        }`}
                     >
                       {p}
                     </button>
@@ -329,7 +328,7 @@ const NotesPage = () => {
           </>
         )}
       </main>
-      
+
       <Footer />
     </div>
   );

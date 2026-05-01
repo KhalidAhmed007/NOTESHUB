@@ -310,12 +310,11 @@ const AdminDashboard = () => {
                           <div className="text-xs text-gray-400">{note.branch} · S{note.semester}</div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                            s === 'approved' ? 'bg-green-100 text-green-700' :
-                            s === 'pending'  ? 'bg-yellow-100 text-yellow-700' :
-                            s === 'rejected' ? 'bg-red-100 text-red-700' :
-                            'bg-gray-200 text-gray-600'
-                          }`}>{s}</span>
+                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${s === 'approved' ? 'bg-green-100 text-green-700' :
+                              s === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                s === 'rejected' ? 'bg-red-100 text-red-700' :
+                                  'bg-gray-200 text-gray-600'
+                            }`}>{s}</span>
                         </td>
                         <td className="px-4 py-3">
                           <span className={`font-bold text-sm ${(note.reportedBy?.length || 0) >= 2 ? 'text-red-600' : 'text-gray-600'}`}>

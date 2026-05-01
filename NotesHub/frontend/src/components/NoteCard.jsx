@@ -15,8 +15,8 @@ const getPlaceholderGradient = (subject) => {
     'from-violet-400 to-fuchsia-500'
   ];
   let sum = 0;
-  for(let i = 0; i < (subject?.length || 0); i++){
-     sum += subject.charCodeAt(i);
+  for (let i = 0; i < (subject?.length || 0); i++) {
+    sum += subject.charCodeAt(i);
   }
   return gradients[sum % gradients.length];
 };
@@ -38,8 +38,8 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
   const canReport = !isOwner && !isAdmin; // only non-owners, non-admins can report
 
   const [userRating, setUserRating] = useState(null);
-  const [ratingAvg,  setRatingAvg]  = useState(note.rating?.average || 0);
-  const [ratingCnt,  setRatingCnt]  = useState(note.rating?.count   || 0);
+  const [ratingAvg, setRatingAvg] = useState(note.rating?.average || 0);
+  const [ratingCnt, setRatingCnt] = useState(note.rating?.count || 0);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [reported, setReported] = useState(note.reportedBy?.includes(currentUser?.id) || false);
@@ -64,11 +64,11 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
       .then(({ data }) => {
         if (!cancelled) {
           setUserRating(data.userRating ?? null);
-          setRatingAvg(data.average  ?? 0);
-          setRatingCnt(data.count    ?? 0);
+          setRatingAvg(data.average ?? 0);
+          setRatingCnt(data.count ?? 0);
         }
       })
-      .catch(() => {/* silent */});
+      .catch(() => {/* silent */ });
     return () => { cancelled = true; };
   }, [note._id]);
 
@@ -78,16 +78,16 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
 
   return (
     <div className="group flex flex-col bg-[#ffffff] rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.08),0_4px_10px_rgba(0,0,0,0.04)] overflow-hidden hover:shadow-[0_20px_40px_rgba(0,0,0,0.12),0_8px_16px_rgba(0,0,0,0.06)] hover:-translate-y-[6px] transition-all duration-300 ease-out relative">
-      
+
       {/* Visual Preview */}
       <div className="relative h-40 w-full overflow-hidden bg-slate-100 shrink-0 border-b border-[#f1f5f9] rounded-t-2xl">
         {note.thumbnailUrl && !imgError ? (
-          <img 
-            src={note.thumbnailUrl} 
-            alt="PDF preview" 
+          <img
+            src={note.thumbnailUrl}
+            alt="PDF preview"
             loading="lazy"
             onError={() => setImgError(true)}
-            className="w-full h-full object-cover rounded-t-2xl group-hover:scale-105 transition-transform duration-500" 
+            className="w-full h-full object-cover rounded-t-2xl group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
           <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${getPlaceholderGradient(note.subject)} group-hover:scale-105 transition-transform duration-500`}>
@@ -174,7 +174,7 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
             <span className="text-sm font-medium whitespace-nowrap text-slate-600 ml-1">
               {ratingCnt > 0 ? (
                 <span className="flex items-center gap-1">
-                 ⭐ <span className="font-bold text-slate-800">{ratingAvg.toFixed(1)}</span> <span className="text-slate-400">({ratingCnt})</span>
+                  ⭐ <span className="font-bold text-slate-800">{ratingAvg.toFixed(1)}</span> <span className="text-slate-400">({ratingCnt})</span>
                 </span>
               ) : (
                 <span className="italic text-slate-400 text-xs px-1">Be the first to rate</span>
@@ -220,27 +220,26 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
 
         {canDelete ? (
           <button
-             onClick={() => onDelete(note._id)}
-             className="flex items-center justify-center p-2.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200 focus:outline-none"
-             title={isAdmin && !isOwner ? 'Delete (Admin)' : 'Delete'}
+            onClick={() => onDelete(note._id)}
+            className="flex items-center justify-center p-2.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200 focus:outline-none"
+            title={isAdmin && !isOwner ? 'Delete (Admin)' : 'Delete'}
           >
-             <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4" />
           </button>
         ) : canReport ? (
           <button
-             onClick={handleReport}
-             className={`flex items-center justify-center p-2.5 rounded-xl transition-all duration-200 focus:outline-none ${
-               reported ? 'text-red-500 bg-red-50 cursor-not-allowed' : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
-             }`}
-             title={reported ? 'Already reported' : 'Report as inappropriate'}
-             disabled={reported}
+            onClick={handleReport}
+            className={`flex items-center justify-center p-2.5 rounded-xl transition-all duration-200 focus:outline-none ${reported ? 'text-red-500 bg-red-50 cursor-not-allowed' : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
+              }`}
+            title={reported ? 'Already reported' : 'Report as inappropriate'}
+            disabled={reported}
           >
-             <Flag className="w-4 h-4" />
+            <Flag className="w-4 h-4" />
           </button>
         ) : null}
       </div>
 
-      <ShareModal 
+      <ShareModal
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
         note={note}

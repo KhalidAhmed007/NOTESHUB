@@ -13,13 +13,13 @@ import Footer from '../components/Footer';
 
 // ── Branch definitions — single source of truth ─────────────────────────────
 const CATEGORIES = [
-  { label: 'Computer Science',  short: 'CSE',   emoji: '💻', color: 'from-blue-500 to-indigo-600'    },
-  { label: 'Information Tech',  short: 'IT',    emoji: '🌐', color: 'from-cyan-500 to-blue-600'      },
-  { label: 'Electronics',       short: 'ECE',   emoji: '⚡', color: 'from-yellow-500 to-orange-500' },
-  { label: 'Electrical Eng.',   short: 'EEE',   emoji: '🔌', color: 'from-amber-500 to-yellow-600'  },
-  { label: 'AI & ML',           short: 'AI/ML', emoji: '🤖', color: 'from-purple-500 to-pink-600'   },
-  { label: 'Mechanical Eng.',   short: 'MECH',  emoji: '⚙️', color: 'from-slate-500 to-gray-700'    },
-  { label: 'Civil Eng.',        short: 'CIVIL', emoji: '🏗️', color: 'from-green-500 to-teal-600'    },
+  { label: 'Computer Science', short: 'CSE', emoji: '💻', color: 'from-blue-500 to-indigo-600' },
+  { label: 'Information Tech', short: 'IT', emoji: '🌐', color: 'from-cyan-500 to-blue-600' },
+  { label: 'Electronics', short: 'ECE', emoji: '⚡', color: 'from-yellow-500 to-orange-500' },
+  { label: 'Electrical Eng.', short: 'EEE', emoji: '🔌', color: 'from-amber-500 to-yellow-600' },
+  { label: 'AI & ML', short: 'AI/ML', emoji: '🤖', color: 'from-purple-500 to-pink-600' },
+  { label: 'Mechanical Eng.', short: 'MECH', emoji: '⚙️', color: 'from-slate-500 to-gray-700' },
+  { label: 'Civil Eng.', short: 'CIVIL', emoji: '🏗️', color: 'from-green-500 to-teal-600' },
 ];
 
 // ── Skeleton loader for stat cards ──────────────────────────────────────────
@@ -62,13 +62,13 @@ const UserDashboard = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const [stats,         setStats]         = useState(null);
-  const [recentNotes,   setRecentNotes]   = useState([]);
-  const [trending,      setTrending]      = useState([]);
-  const [statsLoading,  setStatsLoading]  = useState(true);
+  const [stats, setStats] = useState(null);
+  const [recentNotes, setRecentNotes] = useState([]);
+  const [trending, setTrending] = useState([]);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [recentLoading, setRecentLoading] = useState(true);
-  const [trendLoading,  setTrendLoading]  = useState(true);
-  const [quickSearch,   setQuickSearch]   = useState('');
+  const [trendLoading, setTrendLoading] = useState(true);
+  const [quickSearch, setQuickSearch] = useState('');
 
   // ── Data fetching ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -197,7 +197,7 @@ const UserDashboard = () => {
                   value={stats?.totalNotes ?? 0} sub="Total on platform"
                   gradient="from-blue-500 to-indigo-600"
                 />
-                
+
                 {stats?.isAdmin ? (
                   <>
                     <StatCard
