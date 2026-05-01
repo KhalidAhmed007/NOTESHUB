@@ -44,18 +44,38 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
   const [imgError, setImgError] = useState(false);
   const [reported, setReported] = useState(note.reportedBy?.includes(currentUser?.id) || false);
 
-  const handleReport = async () => {
+  const handleReport = () => {
     if (!currentUser) return toast.error('Please login to report notes.');
     if (reported) return toast.error('You have already reported this note.');
-    if (window.confirm('Are you sure you want to report this note for inappropriate content?')) {
-      try {
-        await axios.post(`/api/notes/${note._id}/report`);
-        setReported(true);
-        toast.success('Note reported successfully. Thank you for keeping the community safe.', { duration: 4000 });
-      } catch (err) {
-        toast.error(err.response?.data?.error || 'Failed to report note.');
-      }
-    }
+    
+    toast((t) => (
+      <div className="flex flex-col sm:max-w-xs">
+        <p className="mb-3 text-sm font-medium text-slate-800">Are you sure you want to report this note for inappropriate content?</p>
+        <div className="flex flex-wrap justify-end gap-2 mt-2">
+          <button 
+            className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-200 transition flex-1 sm:flex-none text-center" 
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Cancel
+          </button>
+          <button 
+            className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition flex-1 sm:flex-none text-center"
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await axios.post(`/api/notes/${note._id}/report`);
+                setReported(true);
+                toast.success('Note reported successfully. Thank you for keeping the community safe.', { duration: 4000 });
+              } catch (err) {
+                toast.error(err.response?.data?.error || 'Failed to report note.');
+              }
+            }}
+          >
+            Report
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity, style: { background: '#fff', color: '#333' } });
   };
 
   useEffect(() => {

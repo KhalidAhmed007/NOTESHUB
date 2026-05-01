@@ -119,15 +119,36 @@ const UserDashboard = () => {
     setTrending(prev => prev.map(n => n._id === noteId ? { ...n, downloadsCount: (n.downloadsCount || 0) + 1 } : n));
   };
 
-  const handleDelete = async (noteId) => {
-    if (!window.confirm('Permanently delete this note?')) return;
-    try {
-      await axios.delete(`/api/notes/${noteId}`);
-      setTrending(prev => prev.filter(n => n._id !== noteId));
-      setRecentNotes(prev => prev.filter(n => n._id !== noteId));
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Delete failed.');
-    }
+  const handleDelete = (noteId) => {
+    toast((t) => (
+      <div className="flex flex-col sm:max-w-xs">
+        <p className="mb-3 text-sm font-medium text-slate-800">Permanently delete this note?</p>
+        <div className="flex flex-wrap justify-end gap-2 mt-2">
+          <button 
+            className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-200 transition flex-1 sm:flex-none text-center" 
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Cancel
+          </button>
+          <button 
+            className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition flex-1 sm:flex-none text-center"
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await axios.delete(`/api/notes/${noteId}`);
+                setTrending(prev => prev.filter(n => n._id !== noteId));
+                setRecentNotes(prev => prev.filter(n => n._id !== noteId));
+                toast.success('Note deleted successfully.');
+              } catch (err) {
+                toast.error(err.response?.data?.error || 'Delete failed.');
+              }
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity, style: { background: '#fff', color: '#333' } });
   };
 
   const handleQuickSearch = (e) => {
