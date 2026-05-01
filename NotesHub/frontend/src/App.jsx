@@ -38,9 +38,27 @@ const AdminRoute = ({ children }) => {
   return children;
 };
 
+import { Toaster } from 'react-hot-toast';
+
 function App() {
   return (
     <AuthProvider>
+      <Toaster 
+        position="top-center" 
+        toastOptions={{
+          style: {
+            background: '#333',
+            color: '#fff',
+            borderRadius: '8px',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+        }} 
+      />
       <Router>
         <Routes>
           {/* Public routes */}

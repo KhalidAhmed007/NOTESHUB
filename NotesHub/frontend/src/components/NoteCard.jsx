@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, Download, Trash2, Share2, FileText, Flag } from 'lucide-react';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import RatingStars from './RatingStars';
 import ShareModal from './ShareModal';
 
@@ -44,15 +45,15 @@ const NoteCard = ({ note, currentUser, onView, onDownload, onDelete }) => {
   const [reported, setReported] = useState(note.reportedBy?.includes(currentUser?.id) || false);
 
   const handleReport = async () => {
-    if (!currentUser) return alert('Please login to report notes.');
-    if (reported) return alert('You have already reported this note.');
+    if (!currentUser) return toast.error('Please login to report notes.');
+    if (reported) return toast.error('You have already reported this note.');
     if (window.confirm('Are you sure you want to report this note for inappropriate content?')) {
       try {
         await axios.post(`/api/notes/${note._id}/report`);
         setReported(true);
-        alert('Note reported successfully. Thank you for keeping the community safe.');
+        toast.success('Note reported successfully. Thank you for keeping the community safe.', { duration: 4000 });
       } catch (err) {
-        alert(err.response?.data?.error || 'Failed to report note.');
+        toast.error(err.response?.data?.error || 'Failed to report note.');
       }
     }
   };
