@@ -1,4 +1,5 @@
 import React from 'react';
+import ScrollToTop from './components/ScrollToTop';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import Login from './pages/Login';
@@ -60,6 +61,7 @@ function App() {
         }} 
       />
       <Router>
+        <ScrollToTop />
         <Routes>
           {/* Public routes */}
           <Route path="/login"  element={<Login />} />
