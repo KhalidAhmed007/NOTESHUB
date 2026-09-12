@@ -1,0 +1,77 @@
+const express = require('express');
+const router = express.Router();
+const Note = require('../models/Note');
+const History = require('../models/History');
+const { authMiddleware } = require('../middleware/authMiddleware');
+const { addFileAccessUrl } = require('../config/s3');
+
+// POST /api/history/view — log a view and increment viewsCount
+router.post('/view', authMiddleware, async (req, res) => {
+  try {
+    const { noteId } = req.body;
+    if (!noteId) return res.status(400).json({ error: 'Missing noteId.' });
+
+    const existingHistory = await History.findOne({ userId: req.user.id, noteId, action: 'view' });
+
+    if (existingHistory) {
+      existingHistory.timestamp = Date.now();
+      await existingHistory.save();
+    } else {
+      await History.create({ userId: req.user.id, noteId, action: 'view' });
+      await Note.findByIdAndUpdate(noteId, { $inc: { viewsCount: 1 } });
+    }
+
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('[History View]', err);
+    res.status(500).json({ error: 'Server error logging view.' });
+  }
+});
+
+// POST /api/history/download — log a download and increment downloadsCount
+router.post('/download', authMiddleware, async (req, res) => {
+  try {
+    const { noteId } = req.body;
+    if (!noteId) return res.status(400).json({ error: 'Missing noteId.' });
+
+    const existingHistory = await History.findOne({ userId: req.user.id, noteId, action: 'download' });
+
+    if (existingHistory) {
+      existingHistory.timestamp = Date.now();
+      await existingHistory.save();
+    } else {
+      await History.create({ userId: req.user.id, noteId, action: 'download' });
+      await Note.findByIdAndUpdate(noteId, { $inc: { downloadsCount: 1 } });
+    }
+
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('[History Download]', err);
+    res.status(500).json({ error: 'Server error logging download.' });
+  }
+});
+
+// GET /api/history/user — current user's activity timeline
+router.get('/user', authMiddleware, async (req, res) => {
+  try {
+    const historyLogs = await History.find({ userId: req.user.id })
+      .populate({
+        path:   'noteId',
+        select: 'title subject branch semester fileUrl',
+      })
+      .sort({ timestamp: -1 })
+      .limit(50);
+
+    const historyWithAccessUrls = await Promise.all(historyLogs.map(async (entry) => ({
+      ...entry.toObject(),
+      noteId: entry.noteId ? await addFileAccessUrl(entry.noteId) : null,
+    })));
+
+    res.status(200).json(historyWithAccessUrls);
+  } catch (err) {
+    console.error('[History User]', err);
+    res.status(500).json({ error: 'Server error fetching history.' });
+  }
+});
+
+module.exports = router;
